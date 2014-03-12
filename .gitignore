@@ -1,0 +1,6 @@
+#ignore file for projects
+
+*/*/bin/
+*/*/obj/
+*/*.fsx
+*.suo
