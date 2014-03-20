@@ -1,66 +1,141 @@
 
 module Types
 
-// *** AST ***
-
-type ASTNode() = class end
-
-type Program() = class end
-
-type Expression() = class end
-
-type Declaration() = class end
-
-type DValue() = class inherit Declaration() end
-type DType() = class inherit Declaration() end
-type DDatatype() = class inherit Declaration() end
-type DFunction() = class inherit Declaration() end
-
-type ELiteral() = class inherit Expression() end
-type EIfThenElse() = class inherit Expression() end
-type ELetIn() = class inherit Expression() end
-type ECaseOf() = class inherit Expression() end
-type ELambda() = class inherit Expression() end
-type EBinary() = class inherit Expression() end
-type EUnary() = class inherit Expression() end
-type EFunApplying() = class inherit Expression() end
-
-type BListCons() = class inherit EBinary() end
-type BListConcat() = class inherit EBinary() end
-
-type BAdd() = class inherit EBinary() end
-type BSub() = class inherit EBinary() end
-type BDiv() = class inherit EBinary() end
-type BMult() = class inherit EBinary() end
-
-type BAnd() = class inherit EBinary() end
-type BOr() = class inherit EBinary() end
-type BEquals() = class inherit EBinary() end
-type BNonequals() = class inherit EBinary() end
-
-type UNegation() = class inherit EUnary() end
-type ULogicalNegation() = class inherit EUnary() end
-
 // *** Suffle types ***
 
-// !!! - TODO
+type Type = 
+| TUnit
+| TBool
+| TChar 
+| TInt 
+| TFloat
+| TLambda of Type * Type
+| TDatatype of string
+| TVar of string
 
-type Type = TUnit
-          | TBool
-          | TChar 
-          | TInt 
-          | TFloat
-          | TFn // !!!
-          | TDatatype // !!!
+type DataType = (string * Type) list
+
+type Context = (string * Value) list
 
 // *** Suffle values ***
 
-type Value = VUnit 
-           | VBool of bool
-           | VChar of char
-           | VInt of int
-           | VFloat of float
-           | VCons // !!! ; means applied constructor of some datatype
-           | VClosure // !!! 
+and Value = 
+| VUnit 
+| VBool of bool
+| VChar of char
+| VInt of int
+| VFloat of float
+| VCons of string * Value
+| VClosure of Context * Expression
 
+// *** AST ***
 
+and ASTNode = 
+| Prog of Declaration list
+| Expr of Expression
+| Decl of Declaration
+
+and Declaration =
+| DValue of DValue
+| DDatatype of DDatatype
+| DFunction of DFunction
+
+and Expression = 
+| EIdentifier of EIdentifier
+| ELiteral of ELiteral
+| EIfElse of EIfElse
+| ELetIn of ELetIn
+| EUnary of EUnary
+| EBinary of EBinary
+| ELambda of ELambda
+| EFunApplying of EFunApplying
+| EConstrApplying of EConstrApplying
+
+// Patterns for CaseOf
+and Pattern =
+| PIdentifier of EIdentifier
+| PLiteral of ELiteral
+| PConstructor of string * Pattern
+| Wildcard
+
+// Expresstions
+and EIdentifier = { Name : string }
+and ELiteral = { Value : Value }
+and EIfElse = 
+    { 
+        Condition : Expression
+        OnTrue : Expression
+        OnFalse : Expression
+    }
+and ELetIn =
+    {
+        Binding : Declaration
+        Body : Expression
+    }
+and EUnary =
+    {
+        Operation : UnaryOperation
+        Arg : Expression
+    }
+and EBinary =
+    {
+        Operation : BinaryOperation
+        Arg1 : Expression
+        Arg2 : Expression
+    }
+and ELambda =
+    {
+        Identifier : EIdentifier
+        Body : Expression
+    }
+and EFunApplying =
+    {
+        FunName : EIdentifier
+        Arg : Expression
+    }
+and EConstrApplying =
+    {
+        ConstrName : string
+        Value : Expression
+    }
+and ECaseOf =
+    {
+        Matching : Expression
+        Patterns : (Pattern * Expression) list
+    }
+
+// Declarations
+and DValue =
+    {
+        Name : EIdentifier
+        Value : Value
+    }
+and DDatatype =
+    {
+        Name : EIdentifier
+        Constrs : DataType
+    }
+and DFunction =
+    {
+        Name : EIdentifier
+        Arg : EIdentifier
+        Body : Expression
+    }
+
+// BinaryOperations
+
+and BinaryOperation =
+// Arithmetics
+| BAdd
+| BSub
+| BDiv
+| BMul
+// Logic
+| BAnd
+| BOr
+| BEq
+| BNEq
+
+and UnaryOperation =
+| UNegation
+| ULogicalNegation
