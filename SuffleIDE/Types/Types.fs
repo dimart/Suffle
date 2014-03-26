@@ -1,5 +1,4 @@
-
-module Types
+﻿namespace Types
 
 // *** Suffle types ***
 
@@ -8,7 +7,6 @@ type Type =
 | TBool
 | TChar 
 | TInt 
-| TFloat
 | TLambda of Type * Type
 | TDatatype of string
 | TVar of string
@@ -58,7 +56,11 @@ and Pattern =
 | PConstructor of string * Pattern
 | Wildcard
 
-// Expresstions
+and Function =
+| Function of EIdentifier
+| Lambda of ELambda
+
+// Expressions
 and EIdentifier = { Name : string }
 and ELiteral = { Value : Value }
 and EIfElse = 
@@ -85,12 +87,12 @@ and EBinary =
     }
 and ELambda =
     {
-        Identifier : EIdentifier
+        Arg : EIdentifier
         Body : Expression
     }
 and EFunApplying =
     {
-        FunName : EIdentifier
+        Func : Function
         Arg : Expression
     }
 and EConstrApplying =
@@ -108,7 +110,11 @@ and ECaseOf =
 and DValue =
     {
         Name : EIdentifier
-        Value : Value
+        Value : Expression
+    }
+and DType =
+    {
+        Type : Type
     }
 and DDatatype =
     {
