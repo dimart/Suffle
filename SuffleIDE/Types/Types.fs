@@ -11,7 +11,9 @@ type Type =
 | TDatatype of string
 | TVar of string
 
-type DataType = (string * Type) list
+type Constructor = string * Type option
+
+type DataType = Constructor list
 
 type Context = (string * Value) list
 
@@ -49,6 +51,7 @@ and Expression =
 | ELambda of ELambda
 | EFunApplying of EFunApplying
 | EConstrApplying of EConstrApplying
+| ECaseOf of ECaseOf
 
 // Patterns for CaseOf
 and Pattern =
