@@ -4,10 +4,12 @@
 #load "Auxiliary.fs"
 #load "Literals.fs"
 #load "Binary.fs"
+#load "Pattern.fs"
 #load "Types.fs"
 
 open ParserCombinators.Core
 open Types
 open Parser.Types
+open Parser.Pattern
 
-let x = run (tLambda) "int -> (char -> bool) -> ('a -> A) -> ((int -> int))"
+let x = run pCtor "A true"

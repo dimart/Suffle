@@ -18,14 +18,15 @@ let pLiteral : Parser<Pattern> =
     }
 
 let pWildcard : Parser<Pattern> =
-    sym '_' >>% Wildcard
+    sym '_' >>% PWildcard
 
-let rec pConstructor : Parser<Pattern> =
+let rec pCtor : Parser<Pattern> =
     parse {
         let! c = ctor 
-        let! p = pattern
-        return PConstructor(c, p)
+        let! p = mws1 pattern <|> inbrackets pattern
+        return PCtor(c, p)
     }
 
-and pattern : Parser<Pattern> =
-    any [pIdentifier; pLiteral; pWildcard; pConstructor]
+and pattern pi =
+    let p = any [pWildcard; pLiteral; pIdentifier; pCtor]
+    p <|> inbrackets pattern <| pi

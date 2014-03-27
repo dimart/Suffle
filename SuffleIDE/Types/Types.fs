@@ -49,16 +49,16 @@ and Expression =
 | EUnary of EUnary
 | EBinary of EBinary
 | ELambda of ELambda
-| EFunApplying of EFunApplying
-| EConstrApplying of EConstrApplying
+| EFunApp of EFunApp
+| ECtorApp of ECtorApp
 | ECaseOf of ECaseOf
 
 // Patterns for CaseOf
 and Pattern =
 | PIdentifier of EIdentifier
 | PLiteral of ELiteral
-| PConstructor of string * Pattern
-| Wildcard
+| PCtor of string * Pattern
+| PWildcard
 
 and Function =
 | Function of EIdentifier
@@ -94,12 +94,12 @@ and ELambda =
         Arg : EIdentifier
         Body : Expression
     }
-and EFunApplying =
+and EFunApp =
     {
         Func : Function
         Arg : Expression
     }
-and EConstrApplying =
+and ECtorApp =
     {
         ConstrName : string
         Value : Expression
@@ -149,3 +149,5 @@ and BinaryOperation =
 and UnaryOperation =
 | UNegation
 | ULogicalNegation
+
+

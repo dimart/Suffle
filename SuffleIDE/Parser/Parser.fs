@@ -154,18 +154,18 @@ and PatternParsers() =
         parse {
             let! c = AuxiliaryParsers.constr 
             let! p = PatternParsers.Pattern
-            return PConstructor(c, p)
+            return PCtor(c, p)
         }
 
-    let Wildcard =
-        sym '_' >>% Wildcard
+    let PWildcard =
+        sym '_' >>% PWildcard
 
     let All =
         [
             PatternParsers.Identifier
             PatternParsers.Literal
             PatternParsers.Constructor
-            PatternParsers.Wildcard
+            PatternParsers.PWildcard
         ]
 
     let Pattern = any PatternParsers.All
@@ -223,7 +223,7 @@ and ExpressionParsers() =
         parse {
             let! constr = AuxiliaryParsers.ctor
             let! e = mws1 expr
-            return EConstrApplying{ ConstrName = constr; Value = e }
+            return ECtorApp{ ConstrName = constr; Value = e }
         }
 
     let Lambda =
@@ -234,7 +234,7 @@ and ExpressionParsers() =
         parse {
             let! f = func
             let! e = mws1 expr
-            return EFunApplying{ Func = f; Arg = e }
+            return EFunApp{ Func = f; Arg = e }
         }
 
     let IfElse =

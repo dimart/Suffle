@@ -33,8 +33,8 @@ let rec tLambda pi =
             let! b = tType
             return TLambda(a, b)
         }
-    tl pi
+    tl <|> inbrackets tLambda <| pi
 
-and tType : Parser<Type> =
+and tType pi =
     let t = basicType <|> tLambda
-    t <|> inbrackets t
+    t <|> inbrackets tType <| pi

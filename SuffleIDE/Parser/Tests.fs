@@ -5,7 +5,8 @@ open ParserCombinators.Core
 open Types
 open Parser.Literals
 open Parser.Types
-open Parser.Unary
+open Parser.Pattern
+open Parser.Structures
 
 let isSucc (value : 'a) =
     function 
@@ -106,14 +107,13 @@ type ``Type parsing``() =
 
         Assert.True(isFail <| r "A'")
         Assert.True(isFail <| r "A_B")
-
-
         
     [<Test>]
     member x.``Lambda`` () =
         let r = run tLambda
         Assert.True(isSucc (TLambda(TInt, TInt)) <| r "int -> int")
-        Assert.True(isSucc (TLambda(TChar, TBool)) <| r "char -> bool")
+        Assert.True(isSucc (TLambda(TInt, TInt)) <| r "(int -> int)")
+        Assert.True(isSucc (TLambda(TChar, TBool)) <| r "((char -> bool))")
         Assert.True(isSucc (TLambda(TVar "'a", TVar "'b")) <| r "'a -> 'b")
         
         Assert.True(isSucc (TLambda(TInt, TLambda(TInt, TInt))) <| r "int -> int -> int")
@@ -140,3 +140,66 @@ type ``Type parsing``() =
         Assert.True(isFail <| r "(int -> int")
         Assert.True(isFail <| r "(int) -> ((int)))")
         Assert.True(isFail <| r "int -> char -> bool -> A -> B -> C -> 'a -> 'b -> 'c ->")
+
+[<TestFixture>]
+type ``Pattern parsing``() =
+    
+    [<Test>]
+    member x.``Identifier`` () =
+        let r = run pIdentifier
+        Assert.True(isSucc (PIdentifier{Name = "function1"}) <| r "function1")
+        Assert.True(isSucc (PIdentifier{Name = "_arg1"}) <| r "_arg1")
+        Assert.True(isSucc (PIdentifier{Name = "g'"}) <| r "g'")
+        Assert.True(isSucc (PIdentifier{Name = "F"}) <| r "F")
+
+        Assert.True(isFail <| r "1a")
+        Assert.True(isFail <| r "a-b")
+        Assert.True(isFail <| r "'a")
+        Assert.True(isFail <| r "@x")
+        Assert.True(isFail <| r "x@")
+
+    [<Test>]
+    member x.``Literal`` () =
+        let r = run pLiteral
+        Assert.True(isSucc (PLiteral{Value = VUnit}) <| r "()")
+        Assert.True(isSucc (PLiteral{Value = VInt 123}) <| r "123")
+        Assert.True(isSucc (PLiteral{Value = VInt -42}) <| r "-42")
+        Assert.True(isSucc (PLiteral{Value = VInt 0}) <| r "0")
+        Assert.True(isSucc (PLiteral{Value = VChar 'a'}) <| r "'a'")
+        Assert.True(isSucc (PLiteral{Value = VChar '\n'}) <| r "'\n'")
+        Assert.True(isSucc (PLiteral{Value = VBool true}) <| r "true")
+        Assert.True(isSucc (PLiteral{Value = VBool false}) <| r "false")
+
+    [<Test>]
+    member x.``Wildcard`` () =
+        Assert.True(isSucc PWildcard <| run pWildcard "_")
+
+    [<Test>]
+    member x.``Constructor`` () =
+        let r = run pCtor
+        Assert.True(isSucc (PCtor("A", PLiteral{Value = VInt 123})) <| r "A 123")
+        Assert.True(isSucc (PCtor("A", PLiteral{Value = VChar 'x'})) <| r "A 'x'")
+        Assert.True(isSucc (PCtor("A", PWildcard)) <| r "A _")
+        Assert.True(isSucc (PCtor("A", PLiteral{Value = VBool true})) <| r "A true")
+        Assert.True(isSucc (PCtor("X", PLiteral{Value = VBool false})) <| r "X(false)")
+        Assert.True(isSucc (PCtor("X", PIdentifier{Name = "x"})) <| r "X(x)")
+        Assert.True(isSucc (PCtor("X", PIdentifier{Name = "y"})) <| r "X y")
+
+
+[<TestFixture>]
+type ``Expression parsing``() =
+    
+    [<Test>]
+    member x.``Binary`` () = 
+        ()       
+        (*         
+        let r = run eBinary
+        Assert.True(isSucc (EBinary{Operation = BAdd
+                                    Arg1 = ELiteral{Value = VInt 4}
+                                    Arg2 = ELiteral{Value = VInt 5}}) 
+                        <| r "4+5")
+        Assert.True(isSucc (EBinary{Operation = BNEq
+                                    Arg1 = EIdentifier{Name = "c1"}
+                                    Arg2 = ELiteral{Value = VBool false}}) 
+                        <| r "c1 <> false")
+        *)

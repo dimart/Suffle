@@ -1,4 +1,4 @@
-﻿module Parser.Expression
+﻿module Parser.Structures
 
 open ParserCombinators.Core
 open Types
@@ -32,7 +32,7 @@ let rec eUnary : Parser<Expression> =
 
 and eBinary : Parser<Expression> = 
     parse {
-        let! arg1 = expression
+        let! arg1 = expression       // left recursion!!!
         let! binop = skipws binaries
         let! arg2 = skipws expression
         return EBinary{ Operation = binop; Arg1 = arg1; Arg2 = arg2 }
@@ -42,7 +42,7 @@ and eCtorApp : Parser<Expression> =
     parse {
         let! c = ctor
         let! e = mws1 expression
-        return EConstrApplying{ ConstrName = c; Value = e }
+        return ECtorApp{ ConstrName = c; Value = e }
     }
 
 and internal _elambda =
@@ -62,7 +62,7 @@ and eFunApp : Parser<Expression> =
     parse {
         let! f = func
         let! e = mws1 expression
-        return EFunApplying{ Func = f; Arg = e }
+        return EFunApp{ Func = f; Arg = e }
     }
 
 and eIfElse : Parser<Expression> =
@@ -105,10 +105,10 @@ and eCaseOf : Parser<Expression> =
         return ECaseOf{ Matching = sample; Patterns = plist }
     }
 
-and expression = 
+and expression pi = 
     let e = any [eIdentifier; eLiteral; eIfElse; eLetIn; eUnary; eBinary;
                  eLambda; eFunApp; eCtorApp; eCaseOf]
-    e <|> inbrackets e
+    e <|> inbrackets expression <| pi
 
 
 and dValue =

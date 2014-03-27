@@ -14,7 +14,7 @@ let kw (s : string) : Parser<string> =
     between ws1 (pstr s) ws1
     
 let ident : Parser<string> = 
-    syms alphas >|>> many (syms identSymbols) |>> chars2str
+    (optf id "" <| pstr "_") .>>. (syms alphas |>> string) .>>. (many (syms identSymbols) |>> chars2str) |>> (fun ((a, b), c) -> a + b + c)
 
 let ctor : Parser<string> = 
     syms ['A'..'Z'] >|>> many (syms (alphas @ digits)) |>> chars2str
