@@ -1,0 +1,48 @@
+/*
+    This is snippets for Suffle 0.1
+*/
+
+// unit type
+val u : unit = ();
+
+// arithmetic operations
+fun f(x : int) : int -> int = \ y -> x * x + 5 * (-y);
+fun f' x = \ y -> sqr(x) - 5 * y;
+
+// logical expressions
+
+fun b(x : int) : bool = 
+    if (x > 100) || (x < 75 && x != 42) || !(x * 4 < 20 + x) 
+    then
+        "Yes"
+    else 
+        "No"
+    end;
+
+//lists
+val xs : int list = [1..5]
+val ys = [1, 4, 5, 8, 10, 94] : int list
+
+fun length(xs : int list) =
+    case xs of
+    | []       -> 0
+    | _ :: xs' -> 1 + length xs'
+
+fun push(x : int, xs : int list) = 
+    case xs of
+    | []        -> [x]
+    | x' :: xs' -> x' :: push x xs'
+
+fun map f xs = 
+    case xs of
+    | []       -> []
+    | x :: xs' -> f x :: map f xs'
+
+fun foldl f acc xs =
+    case xs of
+    | []       -> acc
+    | x :: xs' -> foldl f (f acc x) xs'
+
+val xs' : int list = map (\x -> x * x) xs
+
+val y = foldl (\acc x -> x + acc) ys
