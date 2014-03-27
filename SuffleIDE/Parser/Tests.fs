@@ -17,9 +17,6 @@ let isFail =
     | F _ -> true
     | _ -> false
 
-    
-type LP = LiteralParser
-
 [<TestFixture>]
 type ``Literal parsing``() =
     
@@ -105,11 +102,10 @@ type ``Type parsing``() =
         Assert.True(isSucc (TDatatype "A") <| r "A")
         Assert.True(isSucc (TDatatype "Tt") <| r "Tt")
         Assert.True(isSucc (TDatatype "Option") <| r "Option")
+        Assert.True(isSucc (TDatatype "A1") <| r "A1")
 
-        Assert.False(isFail <| r "abc")
-        Assert.False(isFail <| r "A1")
-        Assert.False(isFail <| r "A'")
-        Assert.False(isFail <| r "A_B")
+        Assert.True(isFail <| r "A'")
+        Assert.True(isFail <| r "A_B")
 
 
         
@@ -118,26 +114,24 @@ type ``Type parsing``() =
         let r = run tLambda
         Assert.True(isSucc (TLambda(TInt, TInt)) <| r "int -> int")
         Assert.True(isSucc (TLambda(TChar, TBool)) <| r "char -> bool")
-        Assert.True(isSucc (TLambda(TVar "'a", TVar "'b")) <| r "('a -> 'b)")
+        Assert.True(isSucc (TLambda(TVar "'a", TVar "'b")) <| r "'a -> 'b")
         
-        (*
-        Assert.True(isSucc (TLambda(TLambda(TInt, TInt), TInt)) <| r "int -> int -> int")
+        Assert.True(isSucc (TLambda(TInt, TLambda(TInt, TInt))) <| r "int -> int -> int")
         Assert.True(isSucc (TLambda(TLambda(TInt, TInt), TInt)) <| r "(int -> int) -> int")
         Assert.True(isSucc (TLambda(TInt, TLambda(TInt, TInt))) <| r "int -> (int -> int)")
-        Assert.True(isSucc (TDatatype "A") <| r "A")
         Assert.True(isSucc (TLambda(TDatatype "A", TBool)) <| r "A -> bool")
         Assert.True(isSucc (TLambda(TDatatype "A", TDatatype "B")) <| r "A -> B")
         Assert.True(isSucc (TLambda(
+                                TInt,
                                 TLambda(
+                                    TLambda(TChar, TBool),
                                     TLambda(
-                                        TInt,
-                                        TLambda(TChar, TBool)
-                                    ),
-                                    TLambda(TVar "'a", TDatatype "A" )                    
-                                ),
-                                TLambda(TInt, TInt)
+                                        TLambda(TVar "'a", TDatatype "A"),
+                                        TLambda(TInt, TInt)
+                                    )
+                                )
                             ) 
-                           ) <| r "int -> (char -> bool) -> ('a -> A) -> (((int) -> int))"
+                           ) <| r "int -> (char -> bool) -> ('a -> A) -> (int -> int)"
                     )
         
         Assert.True(isFail <| r "int")
@@ -146,4 +140,3 @@ type ``Type parsing``() =
         Assert.True(isFail <| r "(int -> int")
         Assert.True(isFail <| r "(int) -> ((int)))")
         Assert.True(isFail <| r "int -> char -> bool -> A -> B -> C -> 'a -> 'b -> 'c ->")
-        *)

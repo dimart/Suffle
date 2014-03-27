@@ -9,3 +9,5 @@
 open ParserCombinators.Core
 open Types
 open Parser.Types
+
+let x = run (tLambda) "int -> (char -> bool) -> ('a -> A) -> ((int -> int))"

@@ -25,13 +25,16 @@ let tVar : Parser<Type> =
 let basicType : Parser<Type> = 
     any [tUnit; tBool; tChar; tInt; tDatatype; tVar]
 
-let rec tLambda : Parser<Type> = 
-    parse {
-        let! a = basicType <|> inbrackets (basicType <|> tLambda)
-        let! _ = between pws (pstr "->") pws
-        let! b = basicType <|> tLambda
-        return TLambda(a, b)
-    }
+let rec tLambda pi = 
+    let tl =
+        parse {
+            let! a = basicType <|> inbrackets (tType)
+            let! _ = between pws (pstr "->") pws
+            let! b = tType
+            return TLambda(a, b)
+        }
+    tl pi
 
-let tType : Parser<Type> =
-    basicType <|> tLambda
+and tType : Parser<Type> =
+    let t = basicType <|> tLambda
+    t <|> inbrackets t
