@@ -1,5 +1,8 @@
-﻿module Parser
+﻿module SomeModule
 
+let xxxxxxx = ()
+
+(* 
 open ParserCombinators.Core
 open Types
 
@@ -11,24 +14,26 @@ type AuxiliaryParsers() =
     static let _wsc = syms [' '; '\t'; '\n'; '\r']
     static let _ws1 = many1 <| _wsc
     /// White space character
-    static member wsc = _wsc
+    let wsc = _wsc
     /// At least one whitespace character
-    static member ws1 = _ws1
+    let ws1 = _ws1
     /// Keyword parser. Keyword must be surrounded by whitespace
-    static member kw (s : string) = between _ws1 (pstr s) _ws1
+    let kw (s : string) = between _ws1 (pstr s) _ws1
     
-    static member ident = syms alphas >|>> many (syms identSymbols) |>> chars2str
-    static member constr = syms ['A'..'Z'] >|>> many (syms (alphas @ digits)) |>> chars2str
+    let ident = syms alphas >|>> many (syms identSymbols) |>> chars2str
+    let constr = syms ['A'..'Z'] >|>> many (syms (alphas @ digits)) |>> chars2str
+    
+    let inbrackets p = (between (sym '(') (skipws p) (skipws <| sym ')'))
   end
 
-type LiteralParser() =
+and LiteralParser() =
   class
-    static member Unit = pstr "()" >>% VUnit
-    static member Bool = (pstr "true" >>% VBool true) <|> (pstr "false" >>% VBool true)
-    static member Char = between (sym '\'') (symf (fun _ -> true)) (sym '\'') |>> VChar
-    static member Int  = pint |>> VInt
+    let Unit = pstr "()" >>% VUnit
+    let Bool = (pstr "true" >>% VBool true) <|> (pstr "false" >>% VBool false)
+    let Char = between (sym '\'') (symf (fun _ -> true)) (sym '\'') |>> VChar
+    let Int  = pint |>> VInt
 
-    static member All = 
+    let All = 
         [
             LiteralParser.Unit
             LiteralParser.Bool
@@ -37,119 +42,125 @@ type LiteralParser() =
         ]
   end
 
-type TypeParser() =
+and TypeParser() =
   class
-    static member Unit = pstr "unit" >>% TUnit
-    static member Bool = pstr "bool" >>% TBool
-    static member Char = pstr "char" >>% TChar
-    static member Int  = pstr "int"  >>% TInt
-    static member Datatype = AuxiliaryParsers.ident |>> TDatatype
-    static member Var = sym '\'' >|>> many1 (syms <| ['a'..'z'] @ ['A'..'Z']) |>> (TVar << chars2str)
-    static member Lambda = 
+    let Unit = pstr "unit" >>% TUnit
+    let Bool = pstr "bool" >>% TBool
+    let Char = pstr "char" >>% TChar
+    let Int  = pstr "int"  >>% TInt
+    let Datatype = AuxiliaryParsers.constr |>> TDatatype
+    let Var = sym '\'' >|>> many1 (syms <| ['a'..'z'] @ ['A'..'Z']) |>> (TVar << chars2str)
+    let Lambda = 
         parse {
-            let! a = TypeParser.Type
+            let! a = TypeParser.Basic <|> AuxiliaryParsers.inbrackets (TypeParser.Type)
             let! _ = between pws (pstr "->") pws
             let! b = TypeParser.Type
             return TLambda(a, b)
         }
 
-    static member All =
+    let Basics =
         [
             TypeParser.Unit
             TypeParser.Bool
             TypeParser.Char
             TypeParser.Int
-            TypeParser.Lambda
             TypeParser.Datatype
             TypeParser.Var
         ]
 
-    static member Type = any TypeParser.All
+    let Basic = any TypeParser.Basics
+
+    let All =
+        TypeParser.Basics @ [TypeParser.Lambda]
+
+    let Type = 
+        let t = any TypeParser.All
+        t <|> AuxiliaryParsers.inbrackets t
   end
 
-type UnaryOperationsParsers() =
+and UnaryOperationParsers() =
   class
-    static member Negation =        sym '-' >>% UNegation
-    static member LogicalNegation = sym '!' >>% ULogicalNegation
+    let Negation =        sym '-' >>% UNegation
+    let LogicalNegation = sym '!' >>% ULogicalNegation
 
-    static member All = [
-                            UnaryOperationsParsers.Negation
-                            UnaryOperationsParsers.LogicalNegation
+    let All = [
+                            UnaryOperationParsers.Negation
+                            UnaryOperationParsers.LogicalNegation
                         ]
   end
 
-type BinaryOperationsParsers() =
+and BinaryOperationParsers() =
   class
     // Arithmetic
-    static member Add = pstr "+" >>% BAdd
-    static member Sub = pstr "-" >>% BSub
-    static member Div = pstr "/" >>% BDiv
-    static member Mul = pstr "*" >>% BMul
+    let Add = pstr "+" >>% BAdd
+    let Sub = pstr "-" >>% BSub
+    let Div = pstr "/" >>% BDiv
+    let Mul = pstr "*" >>% BMul
 
-    static member AllArithmetic =
+    let AllArithmetic =
         [
-            BinaryOperationsParsers.Add
-            BinaryOperationsParsers.Sub
-            BinaryOperationsParsers.Div
-            BinaryOperationsParsers.Mul
+            BinaryOperationParsers.Add
+            BinaryOperationParsers.Sub
+            BinaryOperationParsers.Div
+            BinaryOperationParsers.Mul
         ]
 
     // Logic
-    static member And = pstr "&&" >>% BAnd
-    static member Or  = pstr "||" >>% BOr
-    static member Eq  = pstr "==" >>% BEq
-    static member NEq = pstr "<>" >>% BNEq
+    let And = pstr "&&" >>% BAnd
+    let Or  = pstr "||" >>% BOr
+    let Eq  = pstr "==" >>% BEq
+    let NEq = pstr "<>" >>% BNEq
 
-    static member AllLogic =
+    let AllLogic =
         [
-            BinaryOperationsParsers.And
-            BinaryOperationsParsers.Or
-            BinaryOperationsParsers.Eq
-            BinaryOperationsParsers.NEq
+            BinaryOperationParsers.And
+            BinaryOperationParsers.Or
+            BinaryOperationParsers.Eq
+            BinaryOperationParsers.NEq
         ]
 
     // Auxiliary
     // TODO
 
-    static member All =
+    let All =
         [
-            BinaryOperationsParsers.Add
-            BinaryOperationsParsers.Sub
-            BinaryOperationsParsers.Div
-            BinaryOperationsParsers.Mul
-            BinaryOperationsParsers.And
-            BinaryOperationsParsers.Or
-            BinaryOperationsParsers.Eq
-            BinaryOperationsParsers.NEq
+            BinaryOperationParsers.Add
+            BinaryOperationParsers.Sub
+            BinaryOperationParsers.Div
+            BinaryOperationParsers.Mul
+            BinaryOperationParsers.And
+            BinaryOperationParsers.Or
+            BinaryOperationParsers.Eq
+            BinaryOperationParsers.NEq
         ]
   end
 
-type PatternParsers() =
+and PatternParsers() =
   class
-    static member Identifier = 
+    let Identifier = 
         parse {
             let! name = AuxiliaryParsers.ident
             return PIdentifier{ Name = name }
         }
 
-    static member Literal =
+    let Literal =
         let lit = any LiteralParser.All
         parse {
             let! value = lit
             return PLiteral{ Value = value }
         }
 
-    static member Constructor =
+    let Constructor =
         parse {
             let! c = AuxiliaryParsers.constr 
             let! p = PatternParsers.Pattern
             return PConstructor(c, p)
         }
 
-    static member Wildcard =
+    let Wildcard =
         sym '_' >>% Wildcard
 
-    static member All =
+    let All =
         [
             PatternParsers.Identifier
             PatternParsers.Literal
@@ -157,10 +168,10 @@ type PatternParsers() =
             PatternParsers.Wildcard
         ]
 
-    static member Pattern = any PatternParsers.All
+    let Pattern = any PatternParsers.All
   end
 
-type ExpressionParsers() =
+and ExpressionParsers() =
   class
     
     static let expr = ExpressionParsers.Expression
@@ -181,26 +192,26 @@ type ExpressionParsers() =
             return { ELambda.Arg = {EIdentifier.Name = arg}; Body = body }
         }
 
-    static member Identifier = 
+    let Identifier = 
         eident |>> EIdentifier
 
-    static member Literal = 
+    let Literal = 
         let lit = any LiteralParser.All
         parse {
             let! value = lit
             return ELiteral{ Value = value }
         }
 
-    static member Unary = 
-        let un = any UnaryOperationsParsers.All
+    let Unary = 
+        let un = any UnaryOperationParsers.All
         parse {
             let! op = un
             let! e = skipws expr
             return EUnary{ Operation = op; Arg = e }
         }
 
-    static member Binary = 
-        let bin = any BinaryOperationsParsers.All
+    let Binary = 
+        let bin = any BinaryOperationParsers.All
         parse {
             let! arg1 = expr
             let! binop = skipws bin
@@ -208,17 +219,17 @@ type ExpressionParsers() =
             return EBinary{ Operation = binop; Arg1 = arg1; Arg2 = arg2 }
         }
 
-    static member ConstrApplying =
+    let ConstrApplying =
         parse {
-            let! constr = AuxiliaryParsers.constr
+            let! constr = AuxiliaryParsers.ctor
             let! e = mws1 expr
             return EConstrApplying{ ConstrName = constr; Value = e }
         }
 
-    static member Lambda =
+    let Lambda =
         elambda |>> ELambda
         
-    static member FunApplying =
+    let FunApplying =
         let func = (eident |>> Function) <|> (elambda |>> Lambda) 
         parse {
             let! f = func
@@ -226,7 +237,7 @@ type ExpressionParsers() =
             return EFunApplying{ Func = f; Arg = e }
         }
 
-    static member IfElse =
+    let IfElse =
         parse {
             let! _ = pstr "if"
             let! cond = mws1 expr
@@ -238,7 +249,7 @@ type ExpressionParsers() =
             return EIfElse{ Condition = cond; OnTrue = onTrue; OnFalse = onFalse }
         }
     
-    static member LetIn = 
+    let LetIn = 
         parse {
             let! _ = pstr "let"
             let! bind = mws1 DeclarationParser.Declaration
@@ -248,7 +259,7 @@ type ExpressionParsers() =
             return ELetIn{ Binding = bind; Body = body }
         }
 
-    static member CaseOf =
+    let CaseOf =
         let patternLine =
             parse {
                 let! _ = mws1 <| pstr "|"
@@ -266,11 +277,11 @@ type ExpressionParsers() =
             return ECaseOf{ Matching = sample; Patterns = plist }
         }
 
-    static member TypedExpression = ()
+    let TypedExpression = ()
         // requires type parser
         // TODO
 
-    static member All =
+    let All =
         [
             ExpressionParsers.Identifier
             ExpressionParsers.Literal
@@ -284,9 +295,9 @@ type ExpressionParsers() =
             ExpressionParsers.CaseOf
         ]
 
-    static member Expression = 
+    let Expression = 
         let e = any ExpressionParsers.All
-        e <|> (between (sym '(') (skipws e) (skipws <| sym ')'))
+        e <|> AuxiliaryParsers.inbrackets e
   end
 
 and DeclarationParser() =
@@ -300,7 +311,7 @@ and DeclarationParser() =
             return { EIdentifier.Name = name }
         }
 
-    static member Value =
+    let Value =
         parse {
             let! _ = pstr "val"
             let! name = mws1 eident
@@ -309,7 +320,7 @@ and DeclarationParser() =
             return DValue{ Name = name; Value = value }
         }
 
-    static member Function =
+    let Function =
         parse {
             let! _ = pstr "fun"
             let! f = mws1 eident
@@ -319,7 +330,7 @@ and DeclarationParser() =
             return DFunction{ Name = f; Arg = x; Body = body }
         }        
 
-    static member Datatype =
+    let Datatype =
         let oft = 
             parse {
                 let! _ = mws1 <| pstr "of"
@@ -342,19 +353,21 @@ and DeclarationParser() =
             return DDatatype{ Name = {EIdentifier.Name = name}; Constrs = clist }
         }
 
-    static member All =
+    let All =
         [
             DeclarationParser.Value
             DeclarationParser.Function
             DeclarationParser.Datatype
         ]
 
-    static member Declaration = any DeclarationParser.All
+    let Declaration = any DeclarationParser.All
   end
 
 and SuffleParsers() =
   class
 
-    static member Program = many DeclarationParser.Declaration
+    let Program = many DeclarationParser.Declaration
 
   end
+
+*)
