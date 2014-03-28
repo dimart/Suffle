@@ -8,9 +8,9 @@
     <ProjectGuid>1164d861-9f51-4f37-9df6-3a5fecd5da5d</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Types</RootNamespace>
-    <AssemblyName>Types</AssemblyName>
+    <AssemblyName>Specification</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <Name>Types</Name>
+    <Name>Specification</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -42,6 +42,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Types.fs" />
+    <Compile Include="Keywords.fs" />
+    <Compile Include="Syntax.fs" />
+    <Compile Include="OperationPriority.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

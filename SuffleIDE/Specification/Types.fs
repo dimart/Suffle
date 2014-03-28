@@ -1,4 +1,4 @@
-﻿namespace Types
+﻿namespace Specification.Types
 
 // *** Suffle types ***
 
@@ -42,7 +42,7 @@ and Declaration =
 
 and Expression = 
 | ETyped of Expression * Type
-| EIdentifier of EIdentifier
+| EIdent of EIdent
 | ELiteral of ELiteral
 | EIfElse of EIfElse
 | ELetIn of ELetIn
@@ -50,26 +50,21 @@ and Expression =
 | EBinary of EBinary
 | ELambda of ELambda
 | EFunApp of EFunApp
-| ECtorApp of ECtorApp
 | ECaseOf of ECaseOf
 
 // Patterns for CaseOf
 and Pattern =
-| PIdentifier of EIdentifier
+| PIdent of EIdent
 | PLiteral of ELiteral
 | PCtor of string * Pattern
 | PWildcard
 
-and Function =
-| Function of EIdentifier
-| Lambda of ELambda
-
 // Expressions
-and EIdentifier = { Name : string }
+and EIdent = { Name : string }
 and ELiteral = { Value : Value }
 and EIfElse = 
     { 
-        Condition : Expression
+        Cond : Expression
         OnTrue : Expression
         OnFalse : Expression
     }
@@ -80,29 +75,24 @@ and ELetIn =
     }
 and EUnary =
     {
-        Operation : UnaryOperation
+        Op : UnaryOp
         Arg : Expression
     }
 and EBinary =
     {
-        Operation : BinaryOperation
+        Op : BinaryOp
         Arg1 : Expression
         Arg2 : Expression
     }
 and ELambda =
     {
-        Arg : EIdentifier
+        Arg : EIdent
         Body : Expression
     }
 and EFunApp =
     {
-        Func : Function
+        Func : Expression
         Arg : Expression
-    }
-and ECtorApp =
-    {
-        ConstrName : string
-        Value : Expression
     }
 and ECaseOf =
     {
@@ -113,7 +103,7 @@ and ECaseOf =
 // Declarations
 and DValue =
     {
-        Name : EIdentifier
+        Name : EIdent
         Value : Expression
     }
 and DType =
@@ -122,19 +112,18 @@ and DType =
     }
 and DDatatype =
     {
-        Name : EIdentifier
-        Constrs : DataType
+        Name : EIdent
+        Ctors : DataType
     }
 and DFunction =
     {
-        Name : EIdentifier
-        Arg : EIdentifier
+        Name : EIdent
+        Arg : EIdent
         Body : Expression
     }
 
-// BinaryOperations
-
-and BinaryOperation =
+// BinaryOps
+and BinaryOp =
 // Arithmetics
 | BAdd
 | BSub
@@ -143,11 +132,16 @@ and BinaryOperation =
 // Logic
 | BAnd
 | BOr
-| BEq
-| BNEq
+// Comparation
+| BEQ
+| BNEQ
+| BGT
+| BLT
+| BNGT
+| BNLT
 
-and UnaryOperation =
-| UNegation
-| ULogicalNegation
+and UnaryOp =
+| UNeg
+| UNot
 
 
