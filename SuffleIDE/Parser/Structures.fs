@@ -1,21 +1,23 @@
 ﻿module Parser.Structures
 
 open ParserCombinators.Core
-open Types
+open Specification.Types
+open Specification.Syntax
 open Parser.Auxiliary
 open Parser.Literals
 open Parser.Unary
 open Parser.Binary
 open Parser.Pattern
+open Parser.Types
 
 let internal _eident =
     parse {
         let! name = ident
-        return { EIdentifier.Name = name }
+        return { EIdent.Name = name }
     }
 
-let eIdentifier : Parser<Expression> = 
-    _eident |>> EIdentifier
+let eIdent : Parser<Expression> = 
+    _eident |>> EIdent
 
 let eLiteral : Parser<Expression> =
     parse {
@@ -23,49 +25,63 @@ let eLiteral : Parser<Expression> =
         return ELiteral{ Value = value }
     }
 
-let rec eUnary : Parser<Expression> = 
+let primary : Parser<Expression> = 
+    any [eLiteral; eIdent]
+
+let rec arg pi =
+    primary <|> inbrackets expression <| pi
+
+and eUnary pi = 
     parse {
         let! op = unaries
-        let! e = skipws expression
-        return EUnary{ Operation = op; Arg = e }
-    }
+        let! e = skipws arg
+        return EUnary{ Op = op; Arg = e }
+    } <| pi
 
-and eBinary : Parser<Expression> = 
-    parse {
-        let! arg1 = expression       // left recursion!!!
-        let! binop = skipws binaries
-        let! arg2 = skipws expression
-        return EBinary{ Operation = binop; Arg1 = arg1; Arg2 = arg2 }
-    }
+and eBinary pi = 
 
-and eCtorApp : Parser<Expression> =
-    parse {
-        let! c = ctor
-        let! e = mws1 expression
-        return ECtorApp{ ConstrName = c; Value = e }
-    }
+    let mkbin b arg1 arg2 =
+        EBinary{ Op = b; Arg1 = arg1; Arg2 = arg2 }
 
-and internal _elambda =
+    let leftAssos p op =
+        let op_arg = skipws op .>>. skipws p
+        parse {
+            let! x = p
+            let! xs = many op_arg
+            return Seq.fold (fun acc (binOp, y) -> mkbin binOp acc y) x xs
+        }
+
+    let rec mkbinp =
+        function
+        | [] -> arg <|> eFunApp
+        | b :: bs -> leftAssos (mkbinp bs) b
+            
+    mkbinp binPrioritised <| pi
+
+and internal _elambda pi =
     parse {
-        let! _ = sym '\\'
+        let! _ = pstr sLambda
         let! arg = ident
-        let! _ = between pws (pstr "->") pws
+        let! _ = between pws (pstr sArrow) pws
         let! body = expression
-        return { ELambda.Arg = {EIdentifier.Name = arg}; Body = body }
-    }
+        return { ELambda.Arg = {EIdent.Name = arg}; Body = body }
+    } <| pi
 
 and eLambda : Parser<Expression> =
     _elambda |>> ELambda
         
-and eFunApp : Parser<Expression> =
-    let func = (_eident |>> Function) <|> (_elambda |>> Lambda) 
+and eFunApp pi =
     parse {
-        let! f = func
-        let! e = mws1 expression
-        return EFunApp{ Func = f; Arg = e }
-    }
+        let! f = eIdent <|> inbrackets expression
+        let! args = many1 (mws1 arg)
+        let fa f a = EFunApp{ Func = f; Arg = a }
+        return 
+            List.fold (fun f' arg -> fa f' arg) 
+                      (fa f <| List.head args) 
+                      (List.tail args)
+    } <| pi
 
-and eIfElse : Parser<Expression> =
+and eIfElse pi =
     parse {
         let! _ = pstr "if"
         let! cond = mws1 expression
@@ -73,62 +89,66 @@ and eIfElse : Parser<Expression> =
         let! onTrue = mws1 expression
         let! _ = mws1 <| pstr "else"
         let! onFalse = mws1 expression
-        let! _ = mws1 <| pstr "end"
-        return EIfElse{ Condition = cond; OnTrue = onTrue; OnFalse = onFalse }
-    }
+        let! _ = mws1 <| pstr sEndKeyword
+        return EIfElse{ Cond = cond; OnTrue = onTrue; OnFalse = onFalse }
+    } <| pi
     
-and eLetIn : Parser<Expression> = 
+and eLetIn pi = 
     parse {
         let! _ = pstr "let"
         let! bind = mws1 declaration
         let! _ = mws1 <| pstr "in"
         let! body = mws1 expression
-        let! _ = mws1 <| pstr "end"
+        let! _ = mws1 <| pstr sEndKeyword
         return ELetIn{ Binding = bind; Body = body }
-    }
+    } <| pi
 
-and eCaseOf : Parser<Expression> =
+and eCaseOf pi =
     let patternLine =
         parse {
-            let! _ = mws1 <| pstr "|"
+            let! _ = mws1 <| pstr sPipe
             let! p = pattern
-            let! _ = between pws (pstr "->") pws
+            let! _ = between pws (pstr sArrow) pws
             let! e = expression
-            let! _ = skipws <| pstr ";" 
             return (p, e)
-        }
+        } 
     parse {
         let! _ = pstr "case"
         let! sample = mws1 expression
         let! _ = mws1 <| pstr "of"
         let! plist = many1 patternLine
+        let! _ = mws1 <| pstr sEndKeyword
         return ECaseOf{ Matching = sample; Patterns = plist }
-    }
+    } <| pi
 
 and expression pi = 
-    let e = any [eIdentifier; eLiteral; eIfElse; eLetIn; eUnary; eBinary;
-                 eLambda; eFunApp; eCtorApp; eCaseOf]
+    let e = any [eLiteral; eIdent; 
+                 eIfElse; eLetIn; eCaseOf; 
+                 eUnary; eBinary;
+                 eLambda; eFunApp]
     e <|> inbrackets expression <| pi
 
 
-and dValue =
+and dValue pi =
     parse {
-        let! _ = pstr "val"
+        let! _ = pstr sValKeyword
         let! name = mws1 _eident
-        let! _ = between pws (pstr "=") pws
+        let! _ = between pws (pstr sBinding) pws
         let! value = expression
+        let! _ = skipws <| pstr sLineEnding
         return DValue{ Name = name; Value = value }
-    }
+    } <| pi
 
-and dFunction =
+and dFunction pi =
     parse {
-        let! _ = pstr "fun"
+        let! _ = pstr sFunKeyword
         let! f = mws1 _eident
         let! x = mws1 _eident
-        let! _ = between pws (pstr "=") pws
+        let! _ = between pws (pstr sBinding) pws
         let! body = expression
+        let! _ = skipws <| pstr sLineEnding 
         return DFunction{ Name = f; Arg = x; Body = body }
-    }        
+    } <| pi  
 
 and dDatatype =
     let oft = 
@@ -139,18 +159,18 @@ and dDatatype =
         }
     let constr =
         parse {
-            let! _ = mws1 <| pstr "|"
+            let! _ = mws1 <| pstr sPipe
             let! c = ctor
             let! t = opt oft
-            let! _ = skipws <| pstr ";" 
             return (c, t)
         }
     parse {
         let! _ = pstr "datatype"
         let! name = mws1 ctor
-        let! _ = between pws (pstr "=") pws
+        let! _ = between pws (pstr sBinding) pws
         let! clist = many1 constr
-        return DDatatype{ Name = {EIdentifier.Name = name}; Constrs = clist }
+        let! _ = mws1 <| pstr sEndKeyword
+        return DDatatype{ Name = {EIdent.Name = name}; Ctors = clist }
     }
 
 and declaration : Parser<Declaration> =

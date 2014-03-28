@@ -36,7 +36,6 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
-    <Compile Include="Parser.fs" />
     <Compile Include="Auxiliary.fs" />
     <Compile Include="Literals.fs" />
     <Compile Include="Types.fs" />
@@ -48,6 +47,11 @@
     <None Include="TestScript.fsx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Specification\Specification.fsproj">
+      <Name>Specification</Name>
+      <Project>{1164d861-9f51-4f37-9df6-3a5fecd5da5d}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
@@ -61,11 +65,6 @@
     <ProjectReference Include="..\..\ParserCombinators\ParserCombinators.fsproj">
       <Name>ParserCombinators</Name>
       <Project>{6e86bc68-1370-4d81-a432-351f6f4039c9}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Types\Types.fsproj">
-      <Name>Types</Name>
-      <Project>{1164d861-9f51-4f37-9df6-3a5fecd5da5d}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

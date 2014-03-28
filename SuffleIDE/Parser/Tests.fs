@@ -2,7 +2,7 @@
 
 open NUnit.Framework
 open ParserCombinators.Core
-open Types
+open Specification.Types
 open Parser.Literals
 open Parser.Types
 open Parser.Pattern
@@ -147,10 +147,10 @@ type ``Pattern parsing``() =
     [<Test>]
     member x.``Identifier`` () =
         let r = run pIdentifier
-        Assert.True(isSucc (PIdentifier{Name = "function1"}) <| r "function1")
-        Assert.True(isSucc (PIdentifier{Name = "_arg1"}) <| r "_arg1")
-        Assert.True(isSucc (PIdentifier{Name = "g'"}) <| r "g'")
-        Assert.True(isSucc (PIdentifier{Name = "F"}) <| r "F")
+        Assert.True(isSucc (PIdent{Name = "function1"}) <| r "function1")
+        Assert.True(isSucc (PIdent{Name = "_arg1"}) <| r "_arg1")
+        Assert.True(isSucc (PIdent{Name = "g'"}) <| r "g'")
+        Assert.True(isSucc (PIdent{Name = "F"}) <| r "F")
 
         Assert.True(isFail <| r "1a")
         Assert.True(isFail <| r "a-b")
@@ -182,24 +182,137 @@ type ``Pattern parsing``() =
         Assert.True(isSucc (PCtor("A", PWildcard)) <| r "A _")
         Assert.True(isSucc (PCtor("A", PLiteral{Value = VBool true})) <| r "A true")
         Assert.True(isSucc (PCtor("X", PLiteral{Value = VBool false})) <| r "X(false)")
-        Assert.True(isSucc (PCtor("X", PIdentifier{Name = "x"})) <| r "X(x)")
-        Assert.True(isSucc (PCtor("X", PIdentifier{Name = "y"})) <| r "X y")
+        Assert.True(isSucc (PCtor("X", PIdent{Name = "x"})) <| r "X(x)")
+        Assert.True(isSucc (PCtor("X", PIdent{Name = "y"})) <| r "X y")
 
 
 [<TestFixture>]
 type ``Expression parsing``() =
     
     [<Test>]
-    member x.``Binary`` () = 
-        ()       
-        (*         
+    member x.``Binary`` () =      
         let r = run eBinary
-        Assert.True(isSucc (EBinary{Operation = BAdd
+        // Arithmetic
+        Assert.True(isSucc (EBinary{Op = BAdd
                                     Arg1 = ELiteral{Value = VInt 4}
                                     Arg2 = ELiteral{Value = VInt 5}}) 
                         <| r "4+5")
-        Assert.True(isSucc (EBinary{Operation = BNEq
-                                    Arg1 = EIdentifier{Name = "c1"}
-                                    Arg2 = ELiteral{Value = VBool false}}) 
-                        <| r "c1 <> false")
-        *)
+        Assert.True(isSucc (EBinary{Op = BSub
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x - 7")
+        Assert.True(isSucc (EBinary{Op = BDiv
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x / 7")
+        Assert.True(isSucc (EBinary{Op = BMul
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x * 7")
+        Assert.True(isSucc (EBinary{Op = BAdd
+                                    Arg1 = EBinary{
+                                                Op = BMul
+                                                Arg1 = EIdent{ Name = "x" }
+                                                Arg2 = EIdent{ Name = "y" }
+                                           }
+                                    Arg2 = EIdent{ Name = "z" }}) 
+                        <| r "x * y + z")
+        Assert.True(isSucc (EBinary{Op = BSub
+                                    Arg2 = EBinary{
+                                                Op = BDiv
+                                                Arg1 = EIdent{ Name = "x" }
+                                                Arg2 = EIdent{ Name = "y" }
+                                           }
+                                    Arg1 = EIdent{ Name = "z" }}) 
+                        <| r "z - x / y")
+
+        
+        // Logic
+        Assert.True(isSucc (EBinary{Op = BAnd
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x && 7")
+        Assert.True(isSucc (EBinary{Op = BOr
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x || 7")
+
+        // Comparation
+        Assert.True(isSucc (EBinary{Op = BEQ
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x == 7")
+        Assert.True(isSucc (EBinary{Op = BNEQ
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x <> 7")
+        Assert.True(isSucc (EBinary{Op = BGT
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x > 7")
+        Assert.True(isSucc (EBinary{Op = BLT
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x < 7")
+        Assert.True(isSucc (EBinary{Op = BNGT
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x <= 7")
+        Assert.True(isSucc (EBinary{Op = BNLT
+                                    Arg1 = EIdent{ Name = "x" }
+                                    Arg2 = ELiteral{Value = VInt 7}}) 
+                        <| r "x >= 7")
+
+        // Mixed
+        Assert.True(isSucc (EBinary{Op = BAdd
+                                    Arg1 = EFunApp{
+                                                Func = EIdent{ Name = "f" }
+                                                Arg = EIdent{ Name = "x" }
+                                           }
+                                    Arg2 = EFunApp{
+                                                Func = EIdent{ Name = "g" }
+                                                Arg = EIdent{ Name = "y" }
+                                           }}) 
+                        <| r "f x + g y")
+        Assert.True(isSucc (
+                              EBinary
+                               {Op = BOr;
+                                Arg1 =
+                                 EBinary
+                                   {Op = BNGT;
+                                    Arg1 =
+                                     EBinary
+                                       {Op = BAdd;
+                                        Arg1 =
+                                         EBinary
+                                           {Op = BMul;
+                                            Arg1 =
+                                             EBinary
+                                               {Op = BMul;
+                                                Arg1 = ELiteral {Value = VInt 4;};
+                                                Arg2 = EBinary {Op = BAdd;
+                                                                Arg1 = ELiteral {Value = VInt 2;};
+                                                                Arg2 = ELiteral {Value = VInt 3;};};};
+                                            Arg2 = ELiteral {Value = VInt 7;};};
+                                        Arg2 = ELiteral {Value = VInt 5;};};
+                                    Arg2 = EIdent {Name = "x";};};
+                                Arg2 =
+                                 EBinary
+                                   {Op = BAnd;
+                                    Arg1 = EBinary {Op = BEQ;
+                                                    Arg1 = ELiteral {Value = VBool false;};
+                                                    Arg2 = EIdent {Name = "b";};};
+                                    Arg2 =
+                                     EBinary
+                                       {Op = BOr;
+                                        Arg1 =
+                                         EBinary
+                                           {Op = BLT;
+                                            Arg1 = EIdent {Name = "k";};
+                                            Arg2 = EBinary {Op = BDiv;
+                                                            Arg1 = EIdent {Name = "n";};
+                                                            Arg2 = ELiteral {Value = VInt 2;};};};
+                                        Arg2 = EFunApp {Func = EIdent {Name = "f";};
+                                                        Arg = ELiteral {Value = VChar 'x';};};};};}
+                           ) 
+                        <| r "4 * (2 + 3) * 7 + 5 <= x || false == b && (k < n / 2 || f 'x')")

@@ -1,13 +1,14 @@
 ﻿module Parser.Literals
 
 open ParserCombinators.Core
-open Types
+open Specification.Types
+open Specification.Syntax
 
 let lUnit : Parser<Value> = 
-    pstr "()" >>% VUnit
+    pstr sUnit >>% VUnit
 
 let lBool : Parser<Value> = 
-    (pstr "true" >>% VBool true) <|> (pstr "false" >>% VBool false)
+    (pstr sTrue >>% VBool true) <|> (pstr sFalse >>% VBool false)
 
 let lChar : Parser<Value> = 
     between (sym '\'') (symf (fun _ -> true)) (sym '\'') |>> VChar

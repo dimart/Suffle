@@ -1,12 +1,13 @@
 ﻿module Parser.Unary
 
 open ParserCombinators.Core
-open Types
+open Specification.Types
+open Specification.Syntax
 
-let uNegation : Parser<UnaryOperation> = 
-    sym '-' >>% UNegation
+let uNeg : Parser<UnaryOp> = 
+    pstr sNeg >>% UNeg
 
-let uLogicalNegation : Parser<UnaryOperation> = 
-    sym '!' >>% ULogicalNegation
+let uNot : Parser<UnaryOp> = 
+    pstr sNot >>% UNot
 
-let unaries : Parser<UnaryOperation> = any [uNegation; uLogicalNegation]
+let unaries : Parser<UnaryOp> = any [uNeg; uNot]

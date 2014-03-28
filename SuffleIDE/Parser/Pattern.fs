@@ -1,14 +1,15 @@
 ﻿module Parser.Pattern
 
 open ParserCombinators.Core
-open Types
+open Specification.Types
+open Specification.Syntax
 open Parser.Auxiliary
 open Parser.Literals
 
 let pIdentifier : Parser<Pattern> = 
     parse {
         let! name = ident
-        return PIdentifier{ Name = name }
+        return PIdent{ Name = name }
     }
 
 let pLiteral : Parser<Pattern> =
@@ -18,14 +19,14 @@ let pLiteral : Parser<Pattern> =
     }
 
 let pWildcard : Parser<Pattern> =
-    sym '_' >>% PWildcard
+    pstr sWildcard >>% PWildcard
 
-let rec pCtor : Parser<Pattern> =
+let rec pCtor pi =
     parse {
         let! c = ctor 
         let! p = mws1 pattern <|> inbrackets pattern
         return PCtor(c, p)
-    }
+    } <| pi
 
 and pattern pi =
     let p = any [pWildcard; pLiteral; pIdentifier; pCtor]
