@@ -21,5 +21,8 @@ let x5 = run eBinary "1 * 2 + 3 > 5 && x <= y"
 let x6 = run eBinary "((1 * 2 + 3 > 5) && x <= y) || 2 + 3 * 4 <> n / 0"
 let y = run eBinary "f x + g y"
 *)
-let t = run eBinary "4 * (2 + 3) * 7 + 5 <= x || false == b && (k < n / 2 || f 'x')"
+//let t = run eUnary "!(a < 10)"
+
+let x = [1..10]
+let y = List.foldBack (fun x acc -> x :: acc) x []
         

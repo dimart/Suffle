@@ -316,3 +316,94 @@ type ``Expression parsing``() =
                                                         Arg = ELiteral {Value = VChar 'x';};};};};}
                            ) 
                         <| r "4 * (2 + 3) * 7 + 5 <= x || false == b && (k < n / 2 || f 'x')")
+    [<Test>]
+    member x.``Unary`` () =      
+        let r = run eUnary
+        Assert.True(isSucc (EUnary{ Op = UNeg
+                                    Arg = ELiteral{ Value = VInt 5 }
+                           }) <| r "-(5)")
+        Assert.True(isSucc (EUnary{ Op = UNeg
+                                    Arg = EIdent{ Name = "x" }
+                           }) <| r "-x")
+        Assert.True(isSucc (EUnary{ Op = UNot
+                                    Arg = EIdent{ Name = "f" }
+                           }) <| r "!f")
+        Assert.True(isSucc (EUnary{ Op = UNot
+                                    Arg = EBinary { Op = BLT
+                                                    Arg1 = EIdent{ Name = "a" }
+                                                    Arg2 = ELiteral{ Value = VInt 10 }
+                                               }
+                           }) <| r "!(a < 10)")
+
+    [<Test>]
+    member x.``Lambda`` () =      
+        let r = run eLambda
+        Assert.True(isSucc (ELambda{ Arg = {EIdent.Name = "x"}
+                                     Body = EBinary{Op = BAdd
+                                                    Arg1 = EIdent{ Name = "x" }
+                                                    Arg2 = ELiteral{Value = VInt 1}
+                                            }
+                                   })
+                      <| r "\x -> x + 1")
+        Assert.True(isSucc (ELambda{ Arg = {EIdent.Name = "x"}
+                                     Body = ELambda{ Arg = {EIdent.Name = "y"}
+                                                     Body = EBinary{Op = BMul
+                                                                    Arg1 = EIdent{ Name = "x" }
+                                                                    Arg2 = EIdent{ Name = "y" }
+                                                            }
+                                            }
+                                   })
+                      <| r "\ x y -> x * y")
+
+        Assert.True(isSucc (ELambda{ Arg = {EIdent.Name = "x"}
+                                     Body = ELambda{ Arg = {EIdent.Name = "y"}
+                                                     Body = EBinary{Op = BMul
+                                                                    Arg1 = EIdent{ Name = "x" }
+                                                                    Arg2 = EIdent{ Name = "y" }
+                                                            }
+                                            }
+                                   })
+                      <| r "\x -> \y -> x * y")
+
+    [<Test>]
+    member x.``Function Applying`` () =      
+        let r = run eFunApp
+        Assert.True(isSucc 
+                     (EFunApp{ Func = EIdent{ Name = "f" }
+                               Arg = EIdent{ Name = "x" }
+                                   
+                      }) <| r "f x")
+        Assert.True(isSucc 
+                     (EFunApp{ Func = EFunApp{ Func = EIdent{ Name = "f" }
+                                               Arg = EIdent{ Name = "x" }
+                                             }
+                               Arg = EIdent{ Name = "y" }
+                                   
+                      }) <| r "f x y")
+        Assert.True(isSucc 
+                     (EFunApp{ Func = EFunApp{ Func = EIdent{ Name = "f" }
+                                               Arg = EIdent{ Name = "x" }
+                                             }
+                               Arg = EIdent{ Name = "y" }
+                                   
+                      }) <| r "(f x) y")
+        Assert.True(isSucc 
+                     (EFunApp{ Func = EIdent{ Name = "f" }
+                               Arg = EFunApp{ Func = EIdent{ Name = "x" }
+                                              Arg = EIdent{ Name = "y" }
+                                            }
+                      }) <| r "f (x y)")
+
+    [<Test>]
+    member x.``If-Then-Else`` () =      
+        let r = run eIfElse
+        let mkId x = EIdent{ Name = x }
+        Assert.True(isSucc (
+                                EIfElse{
+                                    Cond = mkId "a"
+                                    OnTrue = mkId "b"
+                                    OnFalse = mkId "c"
+                                }
+                           ) <| r "if a then b else c end"
+                   )
+                     
