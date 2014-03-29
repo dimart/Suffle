@@ -58,27 +58,32 @@ and eBinary pi =
             
     mkbinp binPrioritised <| pi
 
-and internal _elambda pi =
+and eLambda pi =
+    let ld x b = ELambda{ Arg = x; Body = b }
+    let mId x = { EIdent.Name = x }
     parse {
         let! _ = pstr sLambda
-        let! arg = ident
+        let! arg0 = skipws ident
+        let! args' = many <| mws1 ident
+        let args = List.rev (arg0 :: args')
         let! _ = between pws (pstr sArrow) pws
         let! body = expression
-        return { ELambda.Arg = {EIdent.Name = arg}; Body = body }
+        return
+            List.fold (fun body lname -> ld (mId lname) body)
+                      (ld (mId args.Head) body)
+                      args.Tail
     } <| pi
-
-and eLambda : Parser<Expression> =
-    _elambda |>> ELambda
         
 and eFunApp pi =
+    let fa f a = EFunApp{ Func = f; Arg = a }
     parse {
         let! f = eIdent <|> inbrackets expression
-        let! args = many1 (mws1 arg)
-        let fa f a = EFunApp{ Func = f; Arg = a }
+        let! arg0 = mws1 arg
+        let! args = many (mws1 arg)
         return 
-            List.fold (fun f' arg -> fa f' arg) 
-                      (fa f <| List.head args) 
-                      (List.tail args)
+            List.fold (fun f' a' -> fa f' a') 
+                      (fa f <| arg0) 
+                      args
     } <| pi
 
 and eIfElse pi =
