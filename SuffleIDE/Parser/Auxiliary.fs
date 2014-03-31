@@ -22,3 +22,7 @@ let ctor : Parser<string> =
 let inbrackets p : Parser<'a> = 
     (between (sym '(') (skipws p) (skipws <| sym ')'))
   
+let eol : Parser<string> = skipws <| pstr "\n"
+
+let pvartype : Parser<string> = 
+    sym '\'' >|>> many1 (syms <| ['a'..'z'] @ ['A'..'Z']) |>> chars2str
