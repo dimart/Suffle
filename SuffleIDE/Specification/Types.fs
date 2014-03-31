@@ -8,10 +8,10 @@ type Type =
 | TChar 
 | TInt 
 | TLambda of Type * Type
-| TDatatype of string
+| TDatatype of string * (Type list)
 | TVar of string
 
-type Constructor = string * Type option
+type Constructor = string * Type list
 
 type DataType = Constructor list
 
@@ -56,7 +56,7 @@ and Expression =
 and Pattern =
 | PIdent of EIdent
 | PLiteral of ELiteral
-| PCtor of string * Pattern
+| PCtor of string * (Pattern list)
 | PWildcard
 
 // Expressions
@@ -103,6 +103,7 @@ and ECaseOf =
 // Declarations
 and DValue =
     {
+        Type : Type
         Name : EIdent
         Value : Expression
     }
@@ -113,10 +114,12 @@ and DType =
 and DDatatype =
     {
         Name : EIdent
+        Params : string list
         Ctors : DataType
     }
 and DFunction =
     {
+        Type : Type
         Name : EIdent
         Arg : EIdent
         Body : Expression

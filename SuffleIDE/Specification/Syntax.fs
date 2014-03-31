@@ -36,6 +36,8 @@ let sBinding = "="
 let sEndKeyword = "end"
 let sLineEnding = ";"
 
+let sDatatype = "datatype"
+
 // Values
 
 let sUnit = "()"
