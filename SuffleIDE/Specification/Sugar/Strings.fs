@@ -1,0 +1,2 @@
+﻿module Specification.Sugar.Strings
+

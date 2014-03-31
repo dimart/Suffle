@@ -45,6 +45,10 @@
     <Compile Include="Keywords.fs" />
     <Compile Include="Syntax.fs" />
     <Compile Include="OperationPriority.fs" />
+    <Compile Include="Libs\Lists.fs" />
+    <Compile Include="Libs\Strings.fs" />
+    <Compile Include="Sugar\Lists.fs" />
+    <Compile Include="Sugar\Strings.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
