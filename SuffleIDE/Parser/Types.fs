@@ -16,16 +16,27 @@ let tChar : Parser<Type> =
 let tInt  : Parser<Type> = 
     pstr "int"  >>% TInt
 
-let tDatatype : Parser<Type> = 
-    ctor |>> TDatatype
-
 let tVar : Parser<Type> = 
-    sym '\'' >|>> many1 (syms <| ['a'..'z'] @ ['A'..'Z']) |>> (TVar << chars2str)
+    pvartype |>> TVar
 
-let basicType : Parser<Type> = 
+let rec tDatatype pi =
+    let c = 
+        parse {
+            let! c' = ctor
+            return TDatatype(c', [])
+        }
+    let cp =
+        parse {
+            let! c' = ctor
+            let! ptypes = many1 (mws1 tType)
+            return TDatatype(c', ptypes)
+        }
+    c <|> inbrackets cp <| pi
+
+and basicType : Parser<Type> = 
     any [tUnit; tBool; tChar; tInt; tDatatype; tVar]
 
-let rec tLambda pi = 
+and tLambda pi = 
     let tl =
         parse {
             let! a = basicType <|> inbrackets (tType)
