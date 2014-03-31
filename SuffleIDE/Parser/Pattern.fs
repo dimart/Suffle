@@ -6,7 +6,10 @@ open Specification.Syntax
 open Parser.Auxiliary
 open Parser.Literals
 
-let pIdentifier : Parser<Pattern> = 
+open Specification.Libs
+open Specification.Sugar
+
+let pIdent : Parser<Pattern> = 
     parse {
         let! name = ident
         return PIdent{ Name = name }
@@ -29,6 +32,34 @@ let rec pCtor pi =
         return PCtor(c, ps)
     } <| pi
 
+and basicpp = any [pWildcard; pLiteral; pIdent; pCtor]
+
+and pListCons pi =
+    let left = basicpp <|> inbrackets pattern
+    parse {
+        let! x = left
+        let! _ = skipws_and_comments <| pstr Lists.consOp
+        let! xs = skipws_and_comments pattern
+        return PCtor(Lists.consName, [x; xs])
+    } <| pi
+
+and pListEmpty pi = pstr <| Lists.openBracket + Lists.closeBracket >>% PCtor(Lists.emptName, []) <| pi
+
+and pList pi =
+
+    let elem = skipws_and_comments pattern
+
+    parse {
+        let! _ = pstr Lists.openBracket
+        let! x = elem
+        let! xs = many ((skipws_and_comments <| pstr Lists.separator) >>. elem)
+        let! _ = skipws_and_comments <| pstr Lists.closeBracket
+        let ys = List.foldBack (fun x acc -> PCtor(Lists.consName, [x; acc])) xs (PCtor(Lists.emptName, []))
+        return PCtor(Lists.consName, [x; ys])
+    } <| pi
+
 and pattern pi =
-    let p = any [pWildcard; pLiteral; pIdentifier; pCtor]
+    let p = any [basicpp; pListCons; pListEmpty; pList]
     skipws_and_comments (p <|> inbrackets pattern) <| pi
+
+

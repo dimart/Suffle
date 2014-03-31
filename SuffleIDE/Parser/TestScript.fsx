@@ -11,17 +11,31 @@
 
 open ParserCombinators.Core
 open Parser.Structures
+open Parser.Pattern
 
 #time "on"
 
-// cannot parser 
-let x = run program """
-datatype List 'a = // this datatype represent familiar lists as in other PLs
-| Cons 'a (List 'a)
-| Nil
-end 
-// olol
-"""
+let s = """
+case bb of
+| x : xs -> ()
+| x : y : xs -> ()
+| [] -> ()
+| [x] -> ()
+| [1] -> ()
+| [x, 2, 3] -> ()
+| x : [] -> ()
+end"""
+
+let x = run eCaseOf """
+case x of
+| y : ys -> ()
+| x : y : xs -> ()
+| [] -> ()
+| [x] -> ()
+| [1] -> ()
+| [x, 2, 3] -> ()
+| x : [] -> ()
+end"""
 #time "off"
 
 let check x =

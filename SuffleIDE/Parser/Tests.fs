@@ -146,7 +146,7 @@ type ``Pattern parsing``() =
     
     [<Test>]
     member x.``Identifier`` () =
-        let r = run pIdentifier
+        let r = run pIdent
         Assert.True(isSucc (PIdent{Name = "function1"}) <| r "function1")
         Assert.True(isSucc (PIdent{Name = "_arg1"}) <| r "_arg1")
         Assert.True(isSucc (PIdent{Name = "g'"}) <| r "g'")
@@ -892,4 +892,47 @@ val = push 3 (push 2 xs)
                            """)                     
             
 
+[<TestFixture>]
+type ``Sugar of Lists``() =
 
+    [<Test>]
+    member x.``Pattern-matching`` () =      
+        let r = run eCaseOf
+        Assert.True(isSucc (
+                                ECaseOf
+                                   {Matching = EIdent {Name = "x";};
+                                    Patterns =
+                                     [(PCtor ("Cons",[PIdent {Name = "y";}; PIdent {Name = "ys";}]),
+                                       ELiteral {Value = VUnit;});
+                                      (PCtor
+                                         ("Cons",
+                                          [PIdent {Name = "x";};
+                                           PCtor ("Cons",[PIdent {Name = "y";}; PIdent {Name = "xs";}])]),
+                                       ELiteral {Value = VUnit;});
+                                      (PCtor ("Nil",[]), ELiteral {Value = VUnit;});
+                                      (PCtor ("Cons",[PIdent {Name = "x";}; PCtor ("Nil",[])]),
+                                       ELiteral {Value = VUnit;});
+                                      (PCtor ("Cons",[PLiteral {Value = VInt 1;}; PCtor ("Nil",[])]),
+                                       ELiteral {Value = VUnit;});
+                                      (PCtor
+                                         ("Cons",
+                                          [PIdent {Name = "x";};
+                                           PCtor
+                                             ("Cons",
+                                              [PLiteral {Value = VInt 2;};
+                                               PCtor
+                                                 ("Cons",[PLiteral {Value = VInt 3;}; PCtor ("Nil",[])])])]),
+                                       ELiteral {Value = VUnit;});
+                                      (PCtor ("Cons",[PIdent {Name = "x";}; PCtor ("Nil",[])]),
+                                       ELiteral {Value = VUnit;})];}
+                           ) <| r """
+                                    case x of
+                                    | y : ys -> ()
+                                    | x : y : xs -> ()
+                                    | [] -> ()
+                                    | [x] -> ()
+                                    | [1] -> ()
+                                    | [x, 2, 3] -> ()
+                                    | x : [] -> ()
+                                    end"""
+                )
