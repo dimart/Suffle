@@ -43,3 +43,10 @@ let sDatatype = "datatype"
 let sUnit = "()"
 let sTrue = "true"
 let sFalse = "false"
+
+// Comments
+
+let sSingleLineCommentOpen = "//"
+let sSingleLineCommentClose = "\n"
+let sMultiLineCommentOpen = "/*"
+let sMultiLineCommnetClose = "*/"

@@ -28,7 +28,7 @@ let rec tDatatype pi =
     let cp =
         parse {
             let! c' = ctor
-            let! ptypes = many1 (mws1 tType)
+            let! ptypes = many1 (skipws_and_comments1 tType)
             return TDatatype(c', ptypes)
         }
     c <|> inbrackets cp <| pi

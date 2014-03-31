@@ -829,11 +829,11 @@ type ``Program parsing``() =
                                                                Arg = ELiteral {Value = VInt 2;};};
                                                Arg = EIdent {Name = "xs";};};};}]
                    ) <| r """
-datatype List 'a =
+datatype List 'a = // this datatype represent familiar lists as in other PLs
 | Cons 'a (List 'a)
 | Nil
 end  
-
+                                        // just add single line comments :)
 def mk :: 'a -> (List 'a)
 fun x = Cons x Nil
 
