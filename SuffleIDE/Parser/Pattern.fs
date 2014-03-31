@@ -22,12 +22,13 @@ let pWildcard : Parser<Pattern> =
     pstr sWildcard >>% PWildcard
 
 let rec pCtor pi =
+    let pp = mws1 pattern <|> skipws (inbrackets pattern)
     parse {
         let! c = ctor 
-        let! p = mws1 pattern <|> inbrackets pattern
-        return PCtor(c, p)
+        let! ps = many (pp <|> (inbrackets pp))
+        return PCtor(c, ps)
     } <| pi
 
 and pattern pi =
     let p = any [pWildcard; pLiteral; pIdentifier; pCtor]
-    p <|> inbrackets pattern <| pi
+    skipws (p <|> inbrackets pattern) <| pi
