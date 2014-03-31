@@ -16,6 +16,8 @@ let internal _eident =
         return { EIdent.Name = name }
     }
 
+let pLineEnding = skipws (pstr sLineEnding) <|> eol
+
 let eIdent : Parser<Expression> = 
     _eident |>> EIdent
 
@@ -99,26 +101,31 @@ and eIfElse pi =
     } <| pi
     
 and eLetIn pi = 
+    let mli b e = ELetIn{ Binding = b; Body = e}
     parse {
         let! _ = pstr "let"
-        let! bind = mws1 declaration
+        let! binds' = many1 <| mws1 declaration
+        let binds = List.rev binds'
         let! _ = mws1 <| pstr "in"
         let! body = mws1 expression
         let! _ = mws1 <| pstr sEndKeyword
-        return ELetIn{ Binding = bind; Body = body }
+        return 
+            List.fold (fun expr b -> mli b expr)
+                      (mli (binds.Head) body)
+                      binds.Tail
     } <| pi
 
 and eCaseOf pi =
     let patternLine =
         parse {
-            let! _ = mws1 <| pstr sPipe
-            let! p = pattern
+            let! _ = skipws <| pstr sPipe
+            let! p = skipws pattern
             let! _ = between pws (pstr sArrow) pws
             let! e = expression
             return (p, e)
         } 
     parse {
-        let! _ = pstr "case"
+        let! _ = mws1 <| pstr "case"
         let! sample = mws1 expression
         let! _ = mws1 <| pstr "of"
         let! plist = many1 patternLine
@@ -131,57 +138,78 @@ and expression pi =
                  eIfElse; eLetIn; eCaseOf; 
                  eUnary; eBinary;
                  eLambda; eFunApp]
-    e <|> inbrackets expression <| pi
+    skipws (e <|> inbrackets expression) <| pi
 
 
 and dValue pi =
     parse {
-        let! _ = pstr sValKeyword
+        let! _ = skipws <| pstr "def"
         let! name = mws1 _eident
+        let! _ = skipws <| pstr "::"
+        let! t = skipws <| tType
+        let! _ = pLineEnding
+        let! _ = skipws <| pstr sValKeyword
         let! _ = between pws (pstr sBinding) pws
         let! value = expression
-        let! _ = skipws <| pstr sLineEnding
-        return DValue{ Name = name; Value = value }
+        let! _ = skipws pLineEnding
+        return DValue{ Type = t; Name = name; Value = value }
     } <| pi
 
 and dFunction pi =
+    let ld x b = ELambda{ Arg = x; Body = b }
+    let mId x = { EIdent.Name = x }
     parse {
-        let! _ = pstr sFunKeyword
-        let! f = mws1 _eident
+        let! _ = skipws <| pstr "def"
+        let! name = mws1 _eident
+        let! _ = skipws <| pstr "::"
+        let! t = skipws <| tType
+        let! _ = pLineEnding
+        let! _ = skipws <| pstr sFunKeyword
         let! x = mws1 _eident
+        let! args = many (mws1 _eident)
         let! _ = between pws (pstr sBinding) pws
         let! body = expression
-        let! _ = skipws <| pstr sLineEnding 
-        return DFunction{ Name = f; Arg = x; Body = body }
+        let! _ = pLineEnding
+        let body' = 
+            List.fold (fun acc x -> ld x acc)
+                      body
+                      args
+        return 
+            DFunction{ Type = t
+                       Name = name
+                       Arg = x 
+                       Body = body' 
+            }
     } <| pi  
 
 and dDatatype =
-    let oft = 
-        parse {
-            let! _ = mws1 <| pstr "of"
-            let! t = tType
-            return t
-        }
     let constr =
         parse {
-            let! _ = mws1 <| pstr sPipe
-            let! c = ctor
-            let! t = opt oft
-            return (c, t)
+            let! _ = between pws (pstr sPipe) pws
+            let! c = skipws ctor
+            let! ts = many <| mws1 tType
+            return (c, ts)
         }
     parse {
-        let! _ = pstr "datatype"
+        let! _ = pstr sDatatype
         let! name = mws1 ctor
+        let! ptypes = many (mws1 pvartype)
         let! _ = between pws (pstr sBinding) pws
         let! clist = many1 constr
         let! _ = mws1 <| pstr sEndKeyword
-        return DDatatype{ Name = {EIdent.Name = name}; Ctors = clist }
+        return DDatatype{ Name = {EIdent.Name = name}
+                          Params = ptypes
+                          Ctors = clist
+                        }
     }
 
 and declaration : Parser<Declaration> =
-    any [dValue; dFunction; dDatatype]
+    skipws <| any [dValue; dFunction; dDatatype]
 
 
 let TypedExpression = ()
     // requires type parser
     // TODO
+
+
+let program : Parser<Declaration list> = between pws (many1 declaration) pws
