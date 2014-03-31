@@ -2,47 +2,64 @@
     This is snippets for Suffle 0.1
 */
 
-// unit type
-val u : unit = ();
+datatype List 'a =
+| Cons 'a (List 'a)
+| Nil
+end  
 
-// arithmetic operations
-fun f(x : int) : int -> int = \ y -> x * x + 5 * (-y);
-fun f' x = \ y -> sqr(x) - 5 * y;
+def mk :: 'a -> (List 'a)
+fun x = Cons x Nil
 
-// logical expressions
+def len :: (List 'a) -> int
+fun list = 
+    case list of
+    | Nil -> 0
+    | Cons _ rest -> len rest + 1
+    end
 
-fun b(x : int) : bool = 
-    if (x > 100) || (x < 75 && x != 42) || !(x * 4 < 20 + x) 
-    then
-        "Yes"
-    else 
-        "No"
-    end;
+def push :: 'a -> (List 'a) -> (List 'a)
+fun x list = 
+    case list of
+    | Nil -> Cons x Nil
+    | Cons x' xs -> Cons x' (push x xs)
+    end
 
-//lists
-val xs : int list = [1..5]
-val ys = [1, 4, 5, 8, 10, 94] : int list
-
-fun length(xs : int list) =
+def rev :: (List 'a) -> (List 'a)
+fun xs =
+    let 
+        def rev' :: (List 'a) -> (List 'a) -> (List 'a)
+        fun rev' xs rest = 
+            case rest of
+            | Nil -> xs
+            | Cons x rs -> rev' (Con x xs) rs
+    in
+        rev' Nil xs
+    end
+         
+def map :: ('a -> 'b) -> (List 'a) -> (List 'b)               
+fun f xs =
     case xs of
-    | []       -> 0
-    | _ :: xs' -> 1 + length xs'
-
-fun push(x : int, xs : int list) = 
+    | Nil -> Nil
+    | Cons x xs' -> Cons (f x) (map f xs')
+    end
+    
+def foldl :: ('a -> 'b -> 'a) -> 'a -> (List 'b) -> 'a
+fun f acc xs =
     case xs of
-    | []        -> [x]
-    | x' :: xs' -> x' :: push x xs'
-
-fun map f xs = 
+    | Nil -> acc
+    | Cons x xs' -> foldl f (f acc x) xs'
+    end
+    
+def foldl :: ('b -> 'a -> 'a) -> (List 'b) -> 'a -> 'a
+fun f xs acc =
     case xs of
-    | []       -> []
-    | x :: xs' -> f x :: map f xs'
+    | Nil -> acc
+    | Cons x xs' -> f x (foldr f xs' acc)
+    end  
+            
+def xs :: (List int)
+val = mk 1
 
-fun foldl f acc xs =
-    case xs of
-    | []       -> acc
-    | x :: xs' -> foldl f (f acc x) xs'
-
-val xs' : int list = map (\x -> x * x) xs
-
-val y = foldl (\acc x -> x + acc) ys
+def y :: (List int)
+val = push 3 (push 2 xs)          
+                           
