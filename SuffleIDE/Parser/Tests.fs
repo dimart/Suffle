@@ -7,6 +7,7 @@ open Parser.Literals
 open Parser.Types
 open Parser.Pattern
 open Parser.Structures
+open Parser
 
 let isSucc (value : 'a) =
     function 
@@ -603,7 +604,7 @@ type ``Program parsing``() =
     
     [<Test>]
     member x.``Program1`` () =      
-        let r = run program
+        let r = Parser.parse
         Assert.True(isSucc (
                              [DDatatype
                                 {Name = {Name = "List";};
@@ -692,6 +693,12 @@ type ``Program parsing``() =
                                       Value = EFunApp {Func = EIdent {Name = "mk";};
                                                        Arg = ELiteral {Value = VInt 5;};};}]
                            ) <| r """
+
+/*
+
+    Multiline comment :)
+
+*/
 datatype List 'a = 
 | Cons 'a (List 'a)
 | Nil

@@ -7,17 +7,17 @@ let alphas = ['a'..'z'] @ ['A'..'Z']
 let digits = ['0'..'9']
 let identSymbols = alphas @ ['_'; '\''] @ digits
 
-let commentSingleL : Parser<char list> = (skipws <| between (pstr sSingleLineCommentOpen) (many <| symf (fun c -> c <> '\n')) (pstr sSingleLineCommentClose))
-let commentMultiL : Parser<char list> = (skipws <| between (pstr sMultiLineCommentOpen) (many <| symf (fun _ -> true)) (pstr sMultiLineCommnetClose))
+//let commentSingleL : Parser<char list> = (skipws <| between (pstr sSingleLineCommentOpen) (many <| symf (fun c -> c <> '\n')) (pstr sSingleLineCommentClose))
+//let commentMultiL : Parser<char list> = (skipws <| between (pstr sMultiLineCommentOpen) (many <| symf (fun _ -> true)) (pstr sMultiLineCommnetClose))
 
 let wsc = syms [' '; '\t'; '\n'; '\r']
 let ws1 = many1 <| wsc
 
 let mws1 p = ws1 >>. p
 
-let pws_and_comments = pws <|> commentSingleL
+let pws_and_comments = pws
 let skipws_and_comments p = pws_and_comments >>. p
-let skipws_and_comments1 p = (ws1 <|> commentSingleL) >>. p
+let skipws_and_comments1 p = ws1 >>. p
     
 let ident : Parser<string> = 
     (optf id "" <| pstr "_") .>>. (syms ['a'..'z'] |>> string) .>>. (many (syms identSymbols) |>> chars2str) |>> (fun ((a, b), c) -> a + b + c)
