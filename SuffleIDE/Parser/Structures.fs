@@ -238,4 +238,4 @@ and dDatatype =
 and declaration : Parser<Declaration> =
     skipws_and_comments <| any [dValue; dFunction; dDatatype]
 
-let program : Parser<Declaration list> = between pws_and_comments (many1 declaration) pws_and_comments
+let program : Parser<Declaration list> = between pws_and_comments (many declaration) pws_and_comments
