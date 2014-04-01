@@ -10,6 +10,9 @@ open Parser.Binary
 open Parser.Pattern
 open Parser.Types
 
+open Specification.Libs
+open Specification.Sugar
+
 let internal _eident =
     parse {
         let! name = ident
@@ -31,7 +34,7 @@ let primary : Parser<Expression> =
     any [eLiteral; eIdent]
 
 let rec arg pi =
-    primary <|> inbrackets expression <| pi
+    any [primary; eListEmpty; eList; inbrackets expression] <| pi
 
 and eUnary pi = 
     parse {
@@ -133,22 +136,51 @@ and eCaseOf pi =
         return ECaseOf{ Matching = sample; Patterns = plist }
     } <| pi
 
+and eListCons pi =
+    let fa f a = EFunApp{ Func = f; Arg = a }
+    let mkIde name = EIdent{ Name = name }
+    let left = primary <|> eFunApp <|> inbrackets expression
+    parse {
+        let! x = skipws_and_comments <| left
+        let! _ = skipws_and_comments <| pstr Lists.consOp
+        let! xs = skipws_and_comments expression
+        return fa (fa (mkIde Lists.consName) x) xs
+    } <| pi
+
+and eListEmpty pi = 
+    skipws_and_comments (pstr <| Lists.openBracket + Lists.closeBracket) 
+        >>% EIdent{ Name = Lists.emptName } <| pi
+
+and eList pi =
+    let fa f a = EFunApp{ Func = f; Arg = a }
+    let mkIde name = EIdent{ Name = name }
+    let elem = skipws_and_comments expression
+    parse {
+        let! _ = skipws_and_comments <| pstr Lists.openBracket
+        let! x = elem
+        let! xs = many ((skipws_and_comments <| pstr Lists.separator) >>. elem)
+        let! _ = skipws_and_comments <| pstr Lists.closeBracket
+        let ys = List.foldBack (fun x acc -> fa (fa (mkIde Lists.consName) x) acc) xs (mkIde Lists.emptName)
+        return fa (fa (mkIde Lists.consName) x) ys
+    } <| pi
+
 and expression pi = 
     let e = any [eLiteral; eIdent; 
                  eIfElse; eLetIn; eCaseOf; 
                  eUnary; eBinary;
-                 eLambda; eFunApp]
+                 eLambda; eFunApp;
+                 eListCons; eListEmpty; eList]
     skipws_and_comments (e <|> inbrackets expression) <| pi
 
 
 and dValue pi =
     parse {
         let! _ = skipws_and_comments <| pstr "def"
-        let! name = skipws_and_comments1 _eident
+        let! _ = skipws_and_comments1 <| pstr sValKeyword
         let! _ = skipws_and_comments <| pstr "::"
         let! t = skipws_and_comments <| tType
         let! _ = pLineEnding
-        let! _ = skipws_and_comments <| pstr sValKeyword
+        let! name = skipws_and_comments _eident
         let! _ = between pws_and_comments (pstr sBinding) pws_and_comments
         let! value = expression
         let! _ = skipws_and_comments pLineEnding
@@ -160,11 +192,11 @@ and dFunction pi =
     let mId x = { EIdent.Name = x }
     parse {
         let! _ = skipws_and_comments <| pstr "def"
-        let! name = skipws_and_comments1 _eident
+        let! _ = skipws_and_comments1 <| pstr sFunKeyword
         let! _ = skipws_and_comments <| pstr "::"
         let! t = skipws_and_comments <| tType
         let! _ = pLineEnding
-        let! _ = skipws_and_comments <| pstr sFunKeyword
+        let! name = skipws_and_comments _eident
         let! x = skipws_and_comments1 _eident
         let! args = many (skipws_and_comments1 _eident)
         let! _ = between pws_and_comments (pstr sBinding) pws_and_comments
@@ -205,11 +237,5 @@ and dDatatype =
 
 and declaration : Parser<Declaration> =
     skipws_and_comments <| any [dValue; dFunction; dDatatype]
-
-
-let TypedExpression = ()
-    // requires type parser
-    // TODO
-
 
 let program : Parser<Declaration list> = between pws_and_comments (many1 declaration) pws_and_comments
