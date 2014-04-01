@@ -20,7 +20,7 @@ let skipws_and_comments p = pws_and_comments >>. p
 let skipws_and_comments1 p = (ws1 <|> commentSingleL) >>. p
     
 let ident : Parser<string> = 
-    (optf id "" <| pstr "_") .>>. (syms alphas |>> string) .>>. (many (syms identSymbols) |>> chars2str) |>> (fun ((a, b), c) -> a + b + c)
+    (optf id "" <| pstr "_") .>>. (syms ['a'..'z'] |>> string) .>>. (many (syms identSymbols) |>> chars2str) |>> (fun ((a, b), c) -> a + b + c)
 
 let ctor : Parser<string> = 
     syms ['A'..'Z'] >|>> many (syms (alphas @ digits)) |>> chars2str
