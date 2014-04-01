@@ -1,65 +1,64 @@
-/*
-    This is snippets for Suffle 0.1
-*/
+// This is snippets for Suffle 0.2
+// Which parses correctly
 
 datatype List 'a =
 | Cons 'a (List 'a)
 | Nil
 end  
 
-def mk :: 'a -> (List 'a)
-fun x = Cons x Nil
+def fun :: 'a -> (List 'a)
+mk x = [x]
 
-def len :: (List 'a) -> int
-fun list = 
+def fun :: (List 'a) -> int
+len list = 
     case list of
-    | Nil -> 0
-    | Cons _ rest -> len rest + 1
+    | [] -> 0
+    | _ : rest -> len rest + 1
     end
 
-def push :: 'a -> (List 'a) -> (List 'a)
-fun x list = 
+def fun :: 'a -> (List 'a) -> (List 'a)
+push x list = 
     case list of
-    | Nil -> Cons x Nil
-    | Cons x' xs -> Cons x' (push x xs)
+    | [] -> [x]
+    | x' : xs -> x' : (push x xs)
     end
 
-def rev :: (List 'a) -> (List 'a)
-fun xs =
+def fun :: (List 'a) -> (List 'a)
+rev xs =
     let 
-        def rev' :: (List 'a) -> (List 'a) -> (List 'a)
-        fun rev' xs rest = 
+        def fun :: (List 'a) -> (List 'a) -> (List 'a)
+        rev' xs rest = 
             case rest of
-            | Nil -> xs
-            | Cons x rs -> rev' (Con x xs) rs
+            | [] -> xs
+            | x : rs -> rev' (x : xs) rs
     in
-        rev' Nil xs
+        rev' [] xs
     end
          
-def map :: ('a -> 'b) -> (List 'a) -> (List 'b)               
-fun f xs =
+def fun :: ('a -> 'b) -> (List 'a) -> (List 'b)               
+map f xs =
     case xs of
-    | Nil -> Nil
-    | Cons x xs' -> Cons (f x) (map f xs')
+    | [] -> []
+    | x : xs' -> f x : (map f xs')
     end
     
-def foldl :: ('a -> 'b -> 'a) -> 'a -> (List 'b) -> 'a
-fun f acc xs =
+def fun :: ('a -> 'b -> 'a) -> 'a -> (List 'b) -> 'a
+foldl f acc xs =
     case xs of
-    | Nil -> acc
-    | Cons x xs' -> foldl f (f acc x) xs'
+    | [] -> acc
+    | x : xs' -> foldl f (f acc x) xs'
     end
     
-def foldl :: ('b -> 'a -> 'a) -> (List 'b) -> 'a -> 'a
-fun f xs acc =
+def fun :: ('b -> 'a -> 'a) -> (List 'b) -> 'a -> 'a
+foldr f xs acc =
     case xs of
-    | Nil -> acc
-    | Cons x xs' -> f x (foldr f xs' acc)
+    | [] -> acc
+    | x : xs' -> f x (foldr f xs' acc)
     end  
             
-def xs :: (List int)
-val = mk 1
+def val :: (List int)
+xs = mk 1
 
-def y :: (List int)
-val = push 3 (push 2 xs)          
+def val :: (List int)
+y = push 3 (push 2 xs)          
                            
