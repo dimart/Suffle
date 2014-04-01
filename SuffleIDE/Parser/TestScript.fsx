@@ -15,27 +15,39 @@ open Parser.Pattern
 
 #time "on"
 
-let s = """
-case bb of
-| x : xs -> ()
-| x : y : xs -> ()
-| [] -> ()
-| [x] -> ()
-| [1] -> ()
-| [x, 2, 3] -> ()
-| x : [] -> ()
-end"""
+let x = run program """
+datatype List 'a = 
+| Cons 'a (List 'a)
+| Nil
+end  
+                                        // just add single line comments :)
+def fun :: 'a -> (List 'a)
+mk x = [x]
 
-let x = run eCaseOf """
-case x of
-| y : ys -> ()
-| x : y : xs -> ()
-| [] -> ()
-| [x] -> ()
-| [1] -> ()
-| [x, 2, 3] -> ()
-| x : [] -> ()
-end"""
+def fun :: (List 'a) -> int
+len list = 
+    case list of
+    | [] -> 0
+    | _ : rest -> len rest + 1
+    end
+
+def fun :: (List 'a) -> (List 'a)
+rev xs =
+    let 
+        def fun :: (List 'a) -> (List 'a) -> (List 'a)
+        rev' xs rest = 
+            case rest of
+            | [] -> xs
+            | x : rs -> rev' (x : xs) rs
+            end
+    in
+        rev' [] xs
+    end
+
+def val :: (List int)
+xs = mk 5     
+   
+"""
 #time "off"
 
 let check x =
