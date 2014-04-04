@@ -2,7 +2,6 @@
 
 open System.Collections.Generic
 open Types
-open Declaration
 
 //  List of exceptions.
 //  Exception consists of err message and line number
@@ -11,8 +10,11 @@ exception TypeMismatchException of string * int
 
 let lineNum = 0
 
+let vars = new Dictionary<string, Value list>()
+let funcs = new Dictionary<string, EFunApp list>()
+
 //  Evaluate expression
-let rec evalExpr (expr: Expression) (vars: Map<string, Value>) (funcs: Map<string, DFunction>) =         
+let rec evalExpr (expr: Expression) = 
     //  Return binary operator
     let retNumBin (op: BinaryOp): int -> int -> int = 
         match op with
@@ -38,9 +40,12 @@ let rec evalExpr (expr: Expression) (vars: Map<string, Value>) (funcs: Map<strin
     //  EIdentifier
     let evalIdent (id: EIdent) = 
 //            try
-        match (vars.TryFind id.Name) with
-        | Some a -> a
-        | None -> raise (VariableNotFoundException (id.Name, lineNum))
+        try 
+            match vars.[id.Name] with
+            | a :: _ -> a
+            | [] -> raise <| KeyNotFoundException ()
+        with
+        | :? KeyNotFoundException -> raise (VariableNotFoundException (id.Name, lineNum))
 //            with
 //                //  if identifier isn't defined - we fail to interpret (? - mb need to do on top level)
 //                | VariableNotFoundException name -> printfn "Variable \"%A\" not found" name
@@ -51,14 +56,14 @@ let rec evalExpr (expr: Expression) (vars: Map<string, Value>) (funcs: Map<strin
         
     //  Eval "if" statement 
     let evalIf (stmnt: EIfElse) = 
-        match (evalExpr stmnt.Cond vars funcs) with
-        | VBool cond -> evalExpr (if cond then stmnt.OnTrue else stmnt.OnFalse) vars funcs
-        | _ -> raise (TypeMismatchException ("Excpected type \'bool\'.", lineNum))
+        match (evalExpr stmnt.Cond) with
+        | VBool cond -> evalExpr (if cond then stmnt.OnTrue else stmnt.OnFalse)
+        | _ -> raise (TypeMismatchException ("Expected type \'bool\'.", lineNum))
         
     //  Eval "let" stmnt
     let evalLet (stmnt: ELetIn) = 
         match stmnt.Binding with
-        | DValue x -> vars.Add (x.Name.Name, evalExpr x.Value vars funcs) |> ignore
+        | DValue x -> vars.TryGetValue x.Name.Name = evalExpr x.Value
         //  May be need to pass closure or lambda - dunno now, check on it later
         | DFunction x -> funcs.Add (x.Name.Name, x) |> ignore
         | _ -> ()
@@ -80,7 +85,7 @@ let rec evalExpr (expr: Expression) (vars: Map<string, Value>) (funcs: Map<strin
         let evaluated2 = repack <| evalExpr stmnt.Arg2 vars funcs
         match evaluated1 with
         | Some x -> match evaluated2 with
-                    | Some y -> 
+                    | Some y -> ()
                             
 (*                            
 | ELambda of ELambda
@@ -96,4 +101,4 @@ let rec evalExpr (expr: Expression) (vars: Map<string, Value>) (funcs: Map<strin
     
 
 let a = Expr (EBinary {Op = BAdd; Arg1 = ELiteral {Value = VInt 5}; Arg2 = ELiteral {Value = VInt 7}})
-eval a Map.empty Map.empty
+//eval a Map.empty Map.empty
