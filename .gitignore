@@ -1,0 +1,5 @@
+#ignore file for projects
+
+*/*/bin/
+*/*/obj/
+*.suo
