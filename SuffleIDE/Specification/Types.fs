@@ -41,7 +41,6 @@ and Declaration =
 | DFunction of DFunction
 
 and Expression = 
-| ETyped of Expression * Type
 | EIdent of EIdent
 | ELiteral of ELiteral
 | EIfElse of EIfElse
