@@ -1,6 +1,5 @@
-﻿namespace Interpreter
+﻿namespace Interpreter.Interpreter
 
-open Option
+open Interpreter.Expression
 
-type Class1() = 
-    member this.X = "F#"
+    

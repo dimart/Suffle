@@ -10,8 +10,8 @@ exception TypeMismatchException of string * int
 
 let lineNum = 0
 
-let vars = new Dictionary<string, Value list>()
-let funcs = new Dictionary<string, EFunApp list>()
+let vars = new Dictionary<string, Stack<Value>>()
+let funcs = new Dictionary<string, Stack<DFunction>>()
 
 //  Evaluate expression
 let rec evalExpr (expr: Expression) = 
@@ -22,12 +22,22 @@ let rec evalExpr (expr: Expression) =
         | BSub -> (-)
         | BDiv -> (/)
         | BMul -> (*)
+        | _ -> raise (TypeMismatchException ("Wrong operation", lineNum))
+
+    let retBoolNumBin (op: BinaryOp): int -> int -> bool = 
+        match op with
         | BEQ -> (=)
         | BNEQ -> (<>)
         | BGT -> (>)
         | BLT -> (<)
         | BNGT -> (<=)
         | BNLT -> (>=)
+        | _ -> raise (TypeMismatchException ("Wrong operation", lineNum))
+
+    let retBoolBin (op: BinaryOp): bool -> bool -> bool = 
+        match op with
+        | BAnd -> (&&)
+        | BOr -> (||)
         | _ -> raise (TypeMismatchException ("Wrong operation", lineNum))
 
     //  Evaluate type expression
@@ -41,11 +51,10 @@ let rec evalExpr (expr: Expression) =
     let evalIdent (id: EIdent) = 
 //            try
         try 
-            match vars.[id.Name] with
-            | a :: _ -> a
-            | [] -> raise <| KeyNotFoundException ()
+            (vars.Item id.Name).Peek()
         with
         | :? KeyNotFoundException -> raise (VariableNotFoundException (id.Name, lineNum))
+        | :? System.InvalidOperationException -> raise (VariableNotFoundException (id.Name, lineNum))
 //            with
 //                //  if identifier isn't defined - we fail to interpret (? - mb need to do on top level)
 //                | VariableNotFoundException name -> printfn "Variable \"%A\" not found" name
@@ -63,14 +72,15 @@ let rec evalExpr (expr: Expression) =
     //  Eval "let" stmnt
     let evalLet (stmnt: ELetIn) = 
         match stmnt.Binding with
-        | DValue x -> vars.TryGetValue x.Name.Name = evalExpr x.Value
+        | DValue x -> (vars.Item x.Name.Name).Push <| evalExpr x.Value
         //  May be need to pass closure or lambda - dunno now, check on it later
-        | DFunction x -> funcs.Add (x.Name.Name, x) |> ignore
+        | DFunction x -> (funcs.Item x.Name.Name).Push <| x
         | _ -> ()
+        evalExpr stmnt.Body
             
     //  Eval unary stmnt
     let evalUnary (stmnt: EUnary) = 
-        let evaluated = evalExpr stmnt.Arg vars funcs
+        let evaluated = evalExpr stmnt.Arg
         match stmnt.Op with
         | UNeg ->   match evaluated with
                     | VInt x -> VInt -x
@@ -81,11 +91,17 @@ let rec evalExpr (expr: Expression) =
 
     //  Eval binary statement
     let evalBinary (stmnt: EBinary) = 
-        let evaluated1 = repack <| evalExpr stmnt.Arg1 vars funcs
-        let evaluated2 = repack <| evalExpr stmnt.Arg2 vars funcs
+        let evaluated1 = evalExpr stmnt.Arg1
+        let evaluated2 = evalExpr stmnt.Arg2
         match evaluated1 with
-        | Some x -> match evaluated2 with
-                    | Some y -> ()
+        | VInt x -> match evaluated2 with
+        //  FIXME: Must also evaluate bool statements. Mb need to know argument somewhere from outside (typecheck)
+                    | VInt y -> VInt <| retNumBin stmnt.Op x y
+                    | _ -> raise (TypeMismatchException ("Int expected", lineNum))
+        | VBool x -> match evaluated2 with
+                     | VBool y -> VBool<| retBoolBin stmnt.Op x y
+                     | _ -> raise (TypeMismatchException ("Int expected", lineNum))
+        | _ -> raise (TypeMismatchException ("Int expected", lineNum))
                             
 (*                            
 | ELambda of ELambda
@@ -94,11 +110,12 @@ let rec evalExpr (expr: Expression) =
 *)
 
     match expr with
-    | EIdentifier -> evalIdent expr
-    | ELiteral -> evalLiteral expr
-    | EIfElse -> evalIf expr
-    | ELetIn -> evalLet expr
+    | EIdent x -> evalIdent x
+    | ELiteral x -> evalLiteral x
+    | EIfElse x -> evalIf x
+    | ELetIn x -> evalLet x
+    | EBinary x -> evalBinary x
+    | EUnary x -> evalUnary x
     
-
 let a = Expr (EBinary {Op = BAdd; Arg1 = ELiteral {Value = VInt 5}; Arg2 = ELiteral {Value = VInt 7}})
 //eval a Map.empty Map.empty
