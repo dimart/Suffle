@@ -1,0 +1,125 @@
+
+(* Suffle syntax *)
+(* http://en.wikipedia.org/wiki/Extended_Backus-Naur_Form *)
+
+Program ::= { Declaration };
+
+(* Declarations *)
+
+Declaration ::= dValue | dFunction | dDatatype;
+
+dValue ::= sDef, sVal, sType, (* Value type *) tType, EOL, 
+           (* Value name *) eident, 
+           sBinding, 
+           (* Value expression *) Expression, 
+           EOL;
+
+dFunction ::= sDef, sVal, sType, (* Function type *) tType, EOL, 
+              (* Function name *) eident, 
+              (* Function required arg *) eident, 
+              (* Function optional args *) { eident },
+              sBinding, 
+              (* Function body *) Expression, 
+              EOL;
+
+dDatatype ::= sDatatype, (* Datatype name *) aCtor, 
+              (* Type params *) { aVarType },
+              sBinding, 
+              (* Required constructor *) dCtor, 
+              (* Optional constructors *) { dCtor }, 
+              sEnd;
+
+(* Expressions *)
+
+Expression ::= eLiteral
+             | eIdent
+             | eIfElse
+             | eLetIn
+             | eCaseOf
+             | eUnary
+             | eBinary
+             | eLambda
+             | eFunApp (* Function applucation *)
+
+             (* Syntactic sugar *)
+
+             | eListCons  (* List construction operator "::" *)
+             | eListEmpty (* Empty list "[]" *)
+             | eList (* List inline definition "[1, 2, 3]" *)
+             | "(", Expression, ")";
+
+eIdent   ::= ident;
+eLiteral ::= literals;
+ePrimary ::= eLiteral | eIdent;
+eArg ::= ePrimary | "(", Expression, ")" | (* Sugar *) eListEmpty | eList;
+eUnary ::= unaries, eArg;
+
+eBinary ::= ???
+
+eLambda ::= sLambda, 
+            (* Required argument *) ident, 
+            (* Optional arguments *) { ident }, 
+            sArrow, 
+            (* Lambda body *) Expression;
+
+eFunApp ::= (eIdent | "(", Expression, ")"), eArg, { eArg };
+eIfElse ::= "if", Expression, "then", Expression, "else", Expression, sEnd;
+eLetInt ::= "let", Declaration, { Declaration }, 
+            "in", Expression, 
+            sEnd;
+
+eCaseOf ::= "case", Expression, "of",
+            sPipe, Pattern, sArrow, Expresstion, (* Required pattern *)
+            { sPipe, Pattern, sArrow, Expresstion }, (* Other patterns *)
+            sEnd;
+
+(* Expression lists sugar *)
+eListEmpty ::= "[]"
+eListCons  ::= (ePrimary | eFunApp | "(", Expression, ")"), (* Head *)
+               ":",
+               Expression (* Tail *);
+eList ::= "[", Expression, {",", Expression }, "]";
+
+
+(* Types *)
+
+tType ::= tBasicType | tLambda | "(", tType, ")";
+tBasicType ::= "unit" | "bool" | "char" | "int" | aVarType | tDatatype;
+tLambda ::= (sBasicType | "(", tType, ")"), sArrow, tType;
+tDatatype ::= aCtor | "(", (aCtor, tType, {tType}), ")";
+
+(* Patterns *)
+
+Pattern ::= pBasicPattern | "(", Pattern, ")" | (* Sugar *) pListEmpty | pListCons | pList;
+pBasicPattern ::= pWildcard | pLiteral | pIdent | pCtor;
+pWildcard ::= "_";
+pLiteral ::= literals;
+pIdent ::= ident;
+pCtor ::= aCtor, { Pattern | "(", Pattern, ")" };
+
+(* Pattern List sugar *)
+
+pListEmpty ::= "[]";
+pListCons ::= (pBasicPattern | "(", Pattern, ")"), ":", Pattern;
+pList ::= "[", Pattern, {",", Pattern }, "]";
+
+(* Unaries *)
+
+unaries ::= "-" | "!";
+
+(* Binaries *)
+
+binaries ::= "+" | "-" | "*" | "/"
+           | "&&" | "||"
+           | "==" | "<>"
+           | ">"  | "<"
+           | "<=" | ">=";
+
+(* Auxiliary *)
+
+ident ::= [_], aLowerCase, { aIdentSymbols };
+aCtor ::= aUpperCase, { aLowerCase | aUpperCase | digits };
+aIdentSymbols ::= aLowerCase | aUpperCase | "_" | "'";
+digits = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "0";
+aLowerCase ::= "a" | ... | "z";
+aUpperCase ::= "A" | ... | "Z";
