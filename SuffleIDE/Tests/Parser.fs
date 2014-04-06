@@ -1,4 +1,4 @@
-﻿module Tests
+﻿module Tests.Parser
 
 open NUnit.Framework
 open ParserCombinators.Core
