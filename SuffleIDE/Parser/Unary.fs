@@ -1,8 +1,8 @@
 ﻿module Parser.Unary
 
 open ParserCombinators.Core
-open Specification.Types
-open Specification.Syntax
+open Suffle.Specification.Types
+open Suffle.Specification.Syntax
 
 let uNeg : Parser<UnaryOp> = 
     pstr sNeg >>% UNeg

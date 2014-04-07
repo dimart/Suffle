@@ -1,9 +1,9 @@
 ﻿module Parser.Binary
 
 open ParserCombinators.Core
-open Specification.Types
-open Specification.Syntax
-open Specification.OperationPriority
+open Suffle.Specification.Types
+open Suffle.Specification.Syntax
+open Suffle.Specification.OperationPriority
 
 // Arithmetic
 let bAdd : Parser<BinaryOp> = 

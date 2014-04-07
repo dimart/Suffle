@@ -1,7 +1,7 @@
 ﻿module Parser.Auxiliary
 
 open ParserCombinators.Core
-open Specification.Syntax
+open Suffle.Specification.Syntax
 
 let alphas = ['a'..'z'] @ ['A'..'Z']
 let digits = ['0'..'9']

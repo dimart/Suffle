@@ -1,4 +1,4 @@
-﻿namespace Interpreter.Interpreter
+﻿namespace Suffle.Interpreter
 
 open Interpreter.Expression
 
