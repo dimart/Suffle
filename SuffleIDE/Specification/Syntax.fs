@@ -1,4 +1,4 @@
-﻿module Specification.Syntax
+﻿module Suffle.Specification.Syntax
 
 // Operations
 

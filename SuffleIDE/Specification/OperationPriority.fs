@@ -1,6 +1,6 @@
-﻿module Specification.OperationPriority
+﻿module Suffle.Specification.OperationPriority
 
-open Specification.Types
+open Suffle.Specification.Types
 
 let binaryOps = 
     [BAdd; BSub; BDiv; BMul;

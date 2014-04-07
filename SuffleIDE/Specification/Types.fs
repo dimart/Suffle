@@ -1,4 +1,4 @@
-﻿namespace Specification.Types
+﻿namespace Suffle.Specification.Types
 
 // *** Suffle types ***
 

@@ -1,4 +1,4 @@
-﻿module Parser.Parser
+﻿module Suffle.Parser
 
 open ParserCombinators.Core
 open Parser.Structures

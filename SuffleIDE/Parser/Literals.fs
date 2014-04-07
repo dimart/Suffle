@@ -1,8 +1,8 @@
 ﻿module Parser.Literals
 
 open ParserCombinators.Core
-open Specification.Types
-open Specification.Syntax
+open Suffle.Specification.Types
+open Suffle.Specification.Syntax
 
 let lUnit : Parser<Value> = 
     pstr sUnit >>% VUnit

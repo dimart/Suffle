@@ -2,12 +2,12 @@
 
 open NUnit.Framework
 open ParserCombinators.Core
-open Specification.Types
+open Suffle.Specification.Types
 open Parser.Literals
 open Parser.Types
 open Parser.Pattern
 open Parser.Structures
-open Parser
+open Suffle.Parser
 
 let isSucc (value : 'a) =
     function 
@@ -604,7 +604,7 @@ type ``Program parsing``() =
     
     [<Test>]
     member x.``Program1`` () =      
-        let r = Parser.parse
+        let r = parse
         Assert.True(isSucc (
                              [DDatatype
                                 {Name = {Name = "List";};

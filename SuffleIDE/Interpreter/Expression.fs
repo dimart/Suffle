@@ -1,7 +1,7 @@
 ﻿module Interpreter.Expression
 
 open System.Collections.Generic
-open Specification.Types
+open Suffle.Specification.Types
 
 //  List of exceptions.
 //  Exception consists of err message and line number
@@ -116,6 +116,7 @@ let rec evalExpr (expr: Expression) =
     | ELetIn x -> evalLet x
     | EBinary x -> evalBinary x
     | EUnary x -> evalUnary x
+    | _ -> failwith "Not Emplemented Pattern"
     
 let a = Expr (EBinary {Op = BAdd; Arg1 = ELiteral {Value = VInt 5}; Arg2 = ELiteral {Value = VInt 7}})
 //eval a Map.empty Map.empty

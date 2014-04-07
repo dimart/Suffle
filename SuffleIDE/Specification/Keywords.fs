@@ -1,4 +1,4 @@
-﻿module Specification.Keywords
+﻿module Suffle.Specification.Keywords
 
 let keywords =
     [

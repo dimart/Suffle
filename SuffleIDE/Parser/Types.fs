@@ -1,7 +1,7 @@
 ﻿module Parser.Types
 
 open ParserCombinators.Core
-open Specification.Types
+open Suffle.Specification.Types
 open Parser.Auxiliary
 
 let tUnit : Parser<Type> = 

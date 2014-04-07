@@ -1,8 +1,8 @@
 ﻿module Parser.Structures
 
 open ParserCombinators.Core
-open Specification.Types
-open Specification.Syntax
+open Suffle.Specification.Types
+open Suffle.Specification.Syntax
 open Parser.Auxiliary
 open Parser.Literals
 open Parser.Unary
