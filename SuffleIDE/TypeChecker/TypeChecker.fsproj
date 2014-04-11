@@ -44,6 +44,13 @@
     <Compile Include="TypeChecker.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Specification\Specification.fsproj">
+      <Name>Specification</Name>
+      <Project>{1164d861-9f51-4f37-9df6-3a5fecd5da5d}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
