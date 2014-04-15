@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Parser.fs" />
     <None Include="Script.fsx" />
+    <Compile Include="Interpreter.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ParserCombinators\ParserCombinators.fsproj">

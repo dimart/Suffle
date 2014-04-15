@@ -1,5 +1,6 @@
-﻿namespace Suffle.Interpreter
+﻿module Suffle.Interpreter
 
 open Interpreter.Expression
 
-    
+let eval = 
+    evalExpr    
