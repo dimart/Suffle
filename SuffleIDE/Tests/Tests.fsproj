@@ -55,14 +55,20 @@
       <Project>{6e86bc68-1370-4d81-a432-351f6f4039c9}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Parser\Parser.fsproj">
+    <ProjectReference Include="..\Specification\Specification.fsproj">
+      <Name>Specification</Name>
+      <Project>{1164d861-9f51-4f37-9df6-3a5fecd5da5d}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+<!--	  <ProjectReference Include="..\Parser\Parser.fsproj">
       <Name>Parser</Name>
       <Project>{7bcc2b87-d58d-44c5-8f7c-0c6aa6cb656b}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Specification\Specification.fsproj">
-      <Name>Specification</Name>
-      <Project>{1164d861-9f51-4f37-9df6-3a5fecd5da5d}</Project>
+-->
+	<ProjectReference Include="..\Interpreter\Interpreter.fsproj">
+      <Name>Interpreter</Name>
+      <Project>{19ff518a-bf43-419a-89c1-e0af5f10b954}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

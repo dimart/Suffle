@@ -50,6 +50,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <None Include="Script.fsx" />
+    <Compile Include="ExceptionList.fs" />
     <Compile Include="Expression.fs" />
     <Compile Include="Interpreter.fs" />
   </ItemGroup>
