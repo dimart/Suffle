@@ -24,7 +24,6 @@ and Value =
 | VBool of bool
 | VChar of char
 | VInt of int
-| VFloat of float
 | VCons of string * Value
 | VClosure of Context * Expression
 
