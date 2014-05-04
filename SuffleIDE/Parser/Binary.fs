@@ -1,52 +1,65 @@
 ﻿module Parser.Binary
 
-open ParserCombinators.Core
+open FParsec
 open Suffle.Specification.Types
 open Suffle.Specification.Syntax
 open Suffle.Specification.OperationPriority
+open Parser.Auxiliary
 
 // Arithmetic
-let bAdd : Parser<BinaryOp> = 
-    pstr sAdd >>% BAdd
+let bAdd stream = 
+    pstring sAdd >>% BAdd
+    <| stream
 
-let bSub : Parser<BinaryOp> = 
-    pstr sSub >>% BSub
+let bSub stream = 
+    pstring sSub >>% BSub   
+    <| stream
 
-let bDiv : Parser<BinaryOp> = 
-    pstr sDiv >>% BDiv
+let bDiv stream = 
+    pstring sDiv >>% BDiv 
+    <| stream
 
-let bMul : Parser<BinaryOp> = 
-    pstr sMul >>% BMul
+let bMul stream = 
+    pstring sMul >>% BMul   
+    <| stream
 
 
 // Logic
-let bAnd : Parser<BinaryOp> = 
-    pstr sAnd >>% BAnd
+let bAnd stream = 
+    pstring sAnd >>% BAnd    
+    <| stream
 
-let bOr  : Parser<BinaryOp> = 
-    pstr sOr >>% BOr
+let bOr  stream = 
+    pstring sOr >>% BOr    
+    <| stream
 
 
 // Comparation
-let bEQ  : Parser<BinaryOp> = 
-    pstr sEQ >>% BEQ
+let bEQ  stream = 
+    pstring sEQ >>% BEQ        
+    <| stream
 
-let bNEQ : Parser<BinaryOp> = 
-    pstr sNEQ >>% BNEQ
+let bNEQ stream = 
+    pstring sNEQ >>% BNEQ     
+    <| stream
 
-let bGT : Parser<BinaryOp> = 
-    pstr sGT >>% BGT
+let bGT stream = 
+    pstring sGT >>% BGT     
+    <| stream
     
-let bLT : Parser<BinaryOp> = 
-    pstr sLT >>% BLT
+let bLT stream = 
+    pstring sLT >>% BLT      
+    <| stream
 
-let bNGT : Parser<BinaryOp> = 
-    pstr sNGT >>% BNGT
+let bNGT stream = 
+    pstring sNGT >>% BNGT    
+    <| stream
 
-let bNLT : Parser<BinaryOp> = 
-    pstr sNLT >>% BNLT    
+let bNLT stream = 
+    pstring sNLT >>% BNLT   
+    <| stream 
 
-let binaries : Parser<BinaryOp> = 
+let binaries stream = 
     any [bAdd; bSub; bDiv; bMul; 
          bAnd; bOr; 
          bEQ; bNEQ; bGT; bLT; bNGT; bNLT]
@@ -69,11 +82,9 @@ let binOp2Parser b =
     | BNGT -> bNGT
     | BNLT -> bNLT
 
-let binPrioritised : Parser<BinaryOp> list =
+let binPrioritised : Parser<BinaryOp, unit> list =
     binaryOps
     |> Seq.sortBy priority
     |> Seq.groupBy priority
-    |> Seq.map snd
-    |> Seq.map (Seq.map binOp2Parser)
-    |> Seq.map any
+    |> Seq.map (snd >> (Seq.map binOp2Parser) >> any) //>> ((|>) stream))
     |> Seq.toList

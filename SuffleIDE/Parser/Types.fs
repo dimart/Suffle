@@ -1,51 +1,47 @@
 ﻿module Parser.Types
 
-open ParserCombinators.Core
+open FParsec
 open Suffle.Specification.Types
 open Parser.Auxiliary
 
-let tUnit : Parser<Type> = 
-    pstr "unit" >>% TUnit
+let tUnit stream = 
+    pstring "unit" >>% TUnit
+    <| stream
 
-let tBool : Parser<Type> = 
-    pstr "bool" >>% TBool
+let tBool stream = 
+    pstring "bool" >>% TBool
+    <| stream
 
-let tChar : Parser<Type> = 
-    pstr "char" >>% TChar
+let tChar stream = 
+    pstring "char" >>% TChar  
+    <| stream
 
-let tInt  : Parser<Type> = 
-    pstr "int"  >>% TInt
+let tInt  stream = 
+    pstring "int"  >>% TInt 
+    <| stream
 
-let tVar : Parser<Type> = 
-    pvartype |>> TVar
+let tVar stream = 
+    pvartype |>> TVar      
+    <| stream
 
-let rec tDatatype pi =
-    let c = 
-        parse {
-            let! c' = ctor
-            return TDatatype(c', [])
-        }
-    let cp =
-        parse {
-            let! c' = ctor
-            let! ptypes = many1 (skipws_and_comments1 tType)
-            return TDatatype(c', ptypes)
-        }
-    c <|> inbrackets cp <| pi
+let rec tDatatype stream =
+    let c = ctor |>> (fun c -> TDatatype(c, []))
+    let cp = skipws_after ctor .>>. (many1 (skipws_after tType)) |>> TDatatype
+    inbrackets cp <|> c
+    <| stream
 
-and basicType : Parser<Type> = 
-    any [tUnit; tBool; tChar; tInt; tDatatype; tVar]
+and basicType stream = 
+    choice [attempt tDatatype; tUnit; tBool; tChar; tInt; tVar]
+    <| stream
 
-and tLambda pi = 
-    let tl =
-        parse {
-            let! a = basicType <|> inbrackets (tType)
-            let! _ = between pws (pstr "->") pws
-            let! b = tType
-            return TLambda(a, b)
-        }
-    tl <|> inbrackets tLambda <| pi
+and tLambda stream =
+    let left = skipws_after (attempt basicType <|> inbrackets tType)
+    let arrow = skipws_after <| pstring "->"
+    let right = skipws_after tType
+    let tl = left .>> arrow .>>. right |>> TLambda
+    attempt tl <|> (inbrackets tLambda)
+    <| stream
 
-and tType pi =
-    let t = basicType <|> tLambda
-    t <|> inbrackets tType <| pi
+and tType stream =
+    attempt tLambda <|> attempt (inbrackets tType) <|> basicType
+    <| stream

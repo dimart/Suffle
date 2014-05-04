@@ -1,13 +1,18 @@
 ﻿module Parser.Unary
 
-open ParserCombinators.Core
+open FParsec
 open Suffle.Specification.Types
 open Suffle.Specification.Syntax
+open Parser.Auxiliary
 
-let uNeg : Parser<UnaryOp> = 
-    pstr sNeg >>% UNeg
+let uNeg stream = 
+    pstring sNeg >>% UNeg
+    <| stream
 
-let uNot : Parser<UnaryOp> = 
-    pstr sNot >>% UNot
+let uNot stream = 
+    pstring sNot >>% UNot
+    <| stream
 
-let unaries : Parser<UnaryOp> = any [uNeg; uNot]
+let unaries stream = 
+    any [uNeg; uNot]  
+    <| stream

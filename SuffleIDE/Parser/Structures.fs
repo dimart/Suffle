@@ -1,6 +1,6 @@
 ﻿module Parser.Structures
 
-open ParserCombinators.Core
+open FParsec
 open Suffle.Specification.Types
 open Suffle.Specification.Syntax
 open Parser.Auxiliary
@@ -13,229 +13,256 @@ open Parser.Types
 open Specification.Libs
 open Specification.Sugar
 
-let internal _eident =
-    parse {
-        let! name = ident
-        return { EIdent.Name = name }
-    }
+let internal _eident stream =
+    ident |>> (fun name -> { EIdent.Name = name })
+    <| stream
+            
+let pSepString s = skipws_and_comments1 <| pstring s
+let pWsString s = skipws_and_comments <| pstring s
+let pWsAroundString s = skipws_around <| pstring s 
+let pLineEnding = skipws_and_comments <| (pstring sLineEnding >>% '\n') <|> newline
+let pEndKeyword = pstring sEndKeyword
 
-let pLineEnding = skipws_and_comments (pstr sLineEnding) <|> eol
-
-let eIdent : Parser<Expression> = 
+let eIdent stream = 
     _eident |>> EIdent
+    <| stream
 
-let eLiteral : Parser<Expression> =
-    parse {
-        let! value = literals
-        return ELiteral{ Value = value }
-    }
+let eLiteral stream =
+    literals |>> (fun v -> ELiteral{ Value = v })
+    <| stream
 
-let primary : Parser<Expression> = 
+let primary stream = 
     any [eLiteral; eIdent]
+    <| stream
 
-let rec arg pi =
-    any [primary; eListEmpty; eList; inbrackets expression] <| pi
+let rec arg stream =
+    any [primary; eListEmpty; eList; inbrackets expression] 
+    <| stream
 
-and eUnary pi = 
-    parse {
-        let! op = unaries
-        let! e = skipws_and_comments arg
-        return EUnary{ Op = op; Arg = e }
-    } <| pi
+and pSepExpr stream = skipws_and_comments1 expression <| stream 
+and pSepWsDecl stream = skipws_and_comments1 declaration <| stream 
+and pSepIdent stream = skipws_and_comments1 ident <| stream
+and pWsExpr stream = skipws_and_comments expression <| stream      
+and pWsDecl stream = skipws_and_comments declaration <| stream      
+and pWsIdent stream = skipws_and_comments ident <| stream 
 
-and eBinary pi = 
+and eUnary stream = 
+    skipws_after unaries .>>. arg  |>> (fun (u, e) -> EUnary{ Op = u; Arg = e })
+    <| stream
+
+and eBinary stream = 
 
     let mkbin b arg1 arg2 =
         EBinary{ Op = b; Arg1 = arg1; Arg2 = arg2 }
 
     let leftAssos p op =
-        let op_arg = skipws_and_comments op .>>. skipws_and_comments p
-        parse {
-            let! x = p
-            let! xs = many op_arg
-            return Seq.fold (fun acc (binOp, y) -> mkbin binOp acc y) x xs
-        }
+        let wsp = ws_after p
+        let op_arg = ws_after op .>>. wsp
+        wsp .>>. (many op_arg) |>> (fun (x, xs) -> Seq.fold (fun acc (binOp, y) -> mkbin binOp acc y) x xs)
 
-    let rec mkbinp =
-        function
+    let rec mkbinp bin_ops =
+        match bin_ops with
         | [] -> arg <|> eFunApp
         | b :: bs -> leftAssos (mkbinp bs) b
             
-    mkbinp binPrioritised <| pi
+    mkbinp binPrioritised <| stream
 
-and eLambda pi =
+and eLambda stream =
     let ld x b = ELambda{ Arg = x; Body = b }
     let mId x = { EIdent.Name = x }
-    parse {
-        let! _ = pstr sLambda
-        let! arg0 = skipws_and_comments ident
-        let! args' = many <| skipws_and_comments1 ident
-        let args = List.rev (arg0 :: args')
-        let! _ = between pws_and_comments (pstr sArrow) pws_and_comments
-        let! body = expression
-        return
-            List.fold (fun body lname -> ld (mId lname) body)
-                      (ld (mId args.Head) body)
-                      args.Tail
-    } <| pi
+    let kw_lambda = skipws_after <| pstring sLambda
+    let arrow = ws_after <| pstring sArrow
+    let arg0 = ws_after ident
+    let args = many (one_space >>. ws_after ident)
+
+    let el =
+        kw_lambda 
+        >>. arg0 .>>. args
+        |>> (fun (arg, args) -> List.rev <| arg::args)
+        .>> arrow
+        .>>. expression
+        |>> (fun (args, body) -> 
+                List.fold (fun body lname -> ld (mId lname) body)
+                          (ld (mId args.Head) body)
+                          args.Tail
+            )
+
+    el stream
         
-and eFunApp pi =
+and eFunApp stream =
     let fa f a = EFunApp{ Func = f; Arg = a }
-    parse {
-        let! f = eIdent <|> inbrackets expression
-        let! arg0 = skipws_and_comments1 arg
-        let! args = many (skipws_and_comments1 arg)
-        return 
+    let pf = ws_after1 <| eIdent <|> inbrackets expression
+    let arg0 = ws_after arg
+    let args = many (one_space >>. ws_after1 arg)
+    tuple3 pf arg0 args
+    |>> (fun (f, x, xs) ->
             List.fold (fun f' a' -> fa f' a') 
-                      (fa f <| arg0) 
-                      args
-    } <| pi
+                      (fa f <| x) 
+                      xs
+        )
+    <| stream
 
-and eIfElse pi =
-    parse {
-        let! _ = pstr "if"
-        let! cond = skipws_and_comments1 expression
-        let! _ = skipws_and_comments1 <| pstr "then"
-        let! onTrue = skipws_and_comments1 expression
-        let! _ = skipws_and_comments1 <| pstr "else"
-        let! onFalse = skipws_and_comments1 expression
-        let! _ = skipws_and_comments1 <| pstr sEndKeyword
-        return EIfElse{ Cond = cond; OnTrue = onTrue; OnFalse = onFalse }
-    } <| pi
+and eIfElse stream =
+    let p_if = ws_after1 <| pstring "if"                              
+    let p_then = ws_after1 <| pstring "then"
+    let p_else = ws_after1 <| pstring "else"
+    let pIfElse =
+        tuple3 (p_if >>. ws_after expression)
+               (p_then >>. ws_after expression)
+               (between p_else pEndKeyword (ws_after1 expression))
+
+    pIfElse
+    |>> (fun (cond, onTrue, onFalse) -> EIfElse{ Cond = cond; OnTrue = onTrue; OnFalse = onFalse })
+    <| stream
     
-and eLetIn pi = 
+and eLetIn stream = 
     let mli b e = ELetIn{ Binding = b; Body = e}
-    parse {
-        let! _ = pstr "let"
-        let! binds' = many1 <| skipws_and_comments1 declaration
-        let binds = List.rev binds'
-        let! _ = skipws_and_comments1 <| pstr "in"
-        let! body = skipws_and_comments1 expression
-        let! _ = skipws_and_comments1 <| pstr sEndKeyword
-        return 
+    let p_let = ws_after1 <| pstring "let"
+    let p_in = ws_after1 <| pstring "in"
+    let p_binds = 
+        p_let
+        >>. many1 (ws_after1 declaration)
+        |>> List.rev
+    let p_body =
+        between p_in pEndKeyword (ws_after1 expression)
+
+    p_binds .>>. p_body
+    |>> (fun (bi, bo) ->
             List.fold (fun expr b -> mli b expr)
-                      (mli (binds.Head) body)
-                      binds.Tail
-    } <| pi
+                      (mli (bi.Head) bo)
+                      bi.Tail
+        )
+    <| stream
 
-and eCaseOf pi =
+and eCaseOf stream =
+    let p_pipe = ws_after <| pstring sPipe
+    let arrow = ws_after (pstring sArrow)
     let patternLine =
-        parse {
-            let! _ = skipws_and_comments <| pstr sPipe
-            let! p = skipws_and_comments pattern
-            let! _ = between pws_and_comments (pstr sArrow) pws_and_comments
-            let! e = expression
-            return (p, e)
-        } 
-    parse {
-        let! _ = skipws_and_comments1 <| pstr "case"
-        let! sample = skipws_and_comments1 expression
-        let! _ = skipws_and_comments1 <| pstr "of"
-        let! plist = many1 patternLine
-        let! _ = skipws_and_comments1 <| pstr sEndKeyword
-        return ECaseOf{ Matching = sample; Patterns = plist }
-    } <| pi
+        p_pipe
+        >>. ws_after pattern
+        .>> arrow
+        .>>. ws_after expression
 
-and eListCons pi =
+    let p_case = ws_after1 <| pstring "case"
+    let p_of = ws_after1 <| pstring "of"
+    let plist = many1 patternLine
+
+    p_case
+    >>. (ws_after1 expression)
+    .>> p_of
+    .>>. plist
+    .>> (one_space >>. pEndKeyword)
+    |>> (fun (sample, plist) ->
+            ECaseOf{ Matching = sample; Patterns = plist }
+        )
+    <| stream
+
+and eListCons stream =
     let fa f a = EFunApp{ Func = f; Arg = a }
     let mkIde name = EIdent{ Name = name }
-    let left = primary <|> eFunApp <|> inbrackets expression
-    parse {
-        let! x = skipws_and_comments <| left
-        let! _ = skipws_and_comments <| pstr Lists.consOp
-        let! xs = skipws_and_comments expression
-        return fa (fa (mkIde Lists.consName) x) xs
-    } <| pi
+    let left = ws_after <| primary <|> eFunApp <|> inbrackets expression
+    let cons = ws_after <| pstring Lists.consOp
+    
+    left
+    .>> cons
+    .>>. expression
+    |>> (fun (x, xs) ->
+            fa (fa (mkIde Lists.consName) x) xs
+        )
+    <| stream
 
-and eListEmpty pi = 
-    skipws_and_comments (pstr <| Lists.openBracket + Lists.closeBracket) 
-        >>% EIdent{ Name = Lists.emptName } <| pi
+and eListEmpty stream =
+    let empt = pstring <| Lists.openBracket + Lists.closeBracket 
+    empt >>% EIdent{ Name = Lists.emptName } 
+    <| stream
 
-and eList pi =
+and eList stream =
     let fa f a = EFunApp{ Func = f; Arg = a }
     let mkIde name = EIdent{ Name = name }
-    let elem = skipws_and_comments expression
-    parse {
-        let! _ = skipws_and_comments <| pstr Lists.openBracket
-        let! x = elem
-        let! xs = many ((skipws_and_comments <| pstr Lists.separator) >>. elem)
-        let! _ = skipws_and_comments <| pstr Lists.closeBracket
-        let ys = List.foldBack (fun x acc -> fa (fa (mkIde Lists.consName) x) acc) xs (mkIde Lists.emptName)
-        return fa (fa (mkIde Lists.consName) x) ys
-    } <| pi
 
-and expression pi = 
+    let popen = skipws_after <| pstring Lists.openBracket
+    let pclose = pstring Lists.closeBracket 
+    let psep = ws_after <| pstring Lists.separator
+
+    between popen pclose (ws_after expression .>>. (many (psep >>. ws_after expression)))
+    |>> (fun (x, xs) ->
+            let ys = List.foldBack (fun x acc -> fa (fa (mkIde Lists.consName) x) acc) xs (mkIde Lists.emptName)
+            fa (fa (mkIde Lists.consName) x) ys
+        )
+    <| stream
+
+and expression stream = 
     let e = any [eLiteral; eIdent; 
                  eIfElse; eLetIn; eCaseOf; 
                  eUnary; eBinary;
                  eLambda; eFunApp;
                  eListCons; eListEmpty; eList]
-    skipws_and_comments (e <|> inbrackets expression) <| pi
+    e <|> inbrackets expression 
+    <| stream
+                                                             
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-and dValue pi =
-    parse {
-        let! _ = skipws_and_comments <| pstr "def"
-        let! _ = skipws_and_comments1 <| pstr sValKeyword
-        let! _ = skipws_and_comments <| pstr "::"
-        let! t = skipws_and_comments <| tType
-        let! _ = pLineEnding
-        let! name = skipws_and_comments _eident
-        let! _ = between pws_and_comments (pstr sBinding) pws_and_comments
-        let! value = expression
-        let! _ = skipws_and_comments pLineEnding
-        return DValue{ Type = t; Name = name; Value = value }
-    } <| pi
+and dValue stream =
+    let p_def = pWsString "def"
+    let p_val = pSepString sValKeyword
+    let p_typeOp = pWsAroundString "::"
+    let p_name = skipws_and_comments _eident
+    let p_binding = pWsAroundString sBinding
+    let p_typedef = p_def >>. p_val >>. p_typeOp >>. tType .>> pLineEnding
+    let p_value = between p_binding pLineEnding expression
 
-and dFunction pi =
+    tuple3 p_typedef p_name p_value
+    |>> (fun (t, name, value) ->
+            DValue{ Type = t; Name = name; Value = value }
+        )
+    <| stream 
+
+and dFunction stream =
     let ld x b = ELambda{ Arg = x; Body = b }
     let mId x = { EIdent.Name = x }
-    parse {
-        let! _ = skipws_and_comments <| pstr "def"
-        let! _ = skipws_and_comments1 <| pstr sFunKeyword
-        let! _ = skipws_and_comments <| pstr "::"
-        let! t = skipws_and_comments <| tType
-        let! _ = pLineEnding
-        let! name = skipws_and_comments _eident
-        let! x = skipws_and_comments1 _eident
-        let! args = many (skipws_and_comments1 _eident)
-        let! _ = between pws_and_comments (pstr sBinding) pws_and_comments
-        let! body = expression
-        let! _ = pLineEnding
-        let body' = 
-            List.fold (fun acc x -> ld x acc)
-                      body
-                      args
-        return 
-            DFunction{ Type = t
-                       Name = name
-                       Arg = x 
-                       Body = body' 
-            }
-    } <| pi  
 
-and dDatatype =
+    let p_def = pWsString "def"
+    let p_fun = pSepString sFunKeyword
+    let p_typeOp = pWsAroundString "::"
+    let p_name = skipws_and_comments _eident
+    let p_binding = pWsAroundString sBinding
+    let p_typedef = p_def >>. p_fun >>. p_typeOp >>. tType .>> pLineEnding
+    let p_arg = skipws_and_comments1 _eident
+    let p_body = between p_binding pLineEnding expression
+
+    tuple5 p_typedef
+           p_name
+           p_arg
+           (many p_arg)
+           p_body
+    |>> (fun (t, name, x, args, body) ->
+             let body' = List.fold (fun acc x -> ld x acc) body args
+             DFunction{ Type = t; Name = name; Arg = x; Body = body' }
+        )
+    <| stream  
+
+and dDatatype stream =    
+    let p_binding = pWsAroundString sBinding
     let constr =
-        parse {
-            let! _ = between pws_and_comments (pstr sPipe) pws_and_comments
-            let! c = skipws_and_comments ctor
-            let! ts = many <| skipws_and_comments1 tType
-            return (c, ts)
-        }
-    parse {
-        let! _ = pstr sDatatype
-        let! name = skipws_and_comments1 ctor
-        let! ptypes = many (skipws_and_comments1 pvartype)
-        let! _ = between pws_and_comments (pstr sBinding) pws_and_comments
-        let! clist = many1 constr
-        let! _ = skipws_and_comments1 <| pstr sEndKeyword
-        return DDatatype{ Name = {EIdent.Name = name}
-                          Params = ptypes
-                          Ctors = clist
-                        }
-    }
+        let ts = many <| skipws_and_comments1 tType
+        let p_pipe = pWsAroundString sPipe
+        p_pipe >>. ctor .>>. ts
 
-and declaration : Parser<Declaration> =
-    skipws_and_comments <| any [dValue; dFunction; dDatatype]
+    let constrs = between p_binding pEndKeyword (many constr)
+    
+    tuple3 (pstring sDatatype >>. skipws_and_comments1 ctor)
+           (many (skipws_and_comments1 pvartype))
+           constrs
+    |>> (fun (name, ptypes, clist) ->
+             DDatatype{ Name = {EIdent.Name = name}; Params = ptypes; Ctors = clist }
+        )
+    <| stream
 
-let program : Parser<Declaration list> = between pws_and_comments (many declaration) pws_and_comments
+and declaration stream =
+    any [dValue; dFunction; dDatatype]
+    <| stream
+
+let program stream = 
+    skipws_around (many declaration)
+    <| stream

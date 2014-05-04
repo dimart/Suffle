@@ -1,22 +1,28 @@
 ﻿module Tests.Parser
-
-open NUnit.Framework
-open ParserCombinators.Core
+               
+open Suffle.Specification.Syntax
+open Suffle.Specification.Keywords   
 open Suffle.Specification.Types
+open Suffle.Specification.OperationPriority
+                     
+open FParsec
+open NUnit.Framework
+
 open Parser.Literals
 open Parser.Types
 open Parser.Pattern
 open Parser.Structures
-open Suffle.Parser
+
+let run' p s = run (p .>> eof) s
 
 let isSucc (value : 'a) =
     function 
-    | S(v, _) -> v = value
+    | FParsec.CharParsers.Success(v, _, _) -> v = value
     | _ -> false
 
 let isFail =
     function
-    | F _ -> true
+    | FParsec.CharParsers.Failure _ -> true
     | _ -> false
 
 [<TestFixture>]
@@ -24,23 +30,22 @@ type ``Literal parsing``() =
     
     [<Test>]
     member x.``Unit`` () =
-        Assert.True(isSucc VUnit <| run lUnit "()")
-
-        Assert.True(isFail <| run lUnit "(]")
-        Assert.True(isFail <| run lUnit "[)")
-        Assert.True(isFail <| run lUnit "(())")
+        Assert.True(isSucc VUnit <| run' lUnit "()")
+        Assert.True(isFail <| run' lUnit "(]")
+        Assert.True(isFail <| run' lUnit "[)")
+        Assert.True(isFail <| run' lUnit "(())")
 
     [<Test>]
     member x.``Bool`` () =
-        Assert.True(isSucc (VBool true) <| run lBool "true")
-        Assert.True(isSucc (VBool false) <| run lBool "false")
+        Assert.True(isSucc (VBool true) <| run' lBool "true")
+        Assert.True(isSucc (VBool false) <| run' lBool "false")
 
-        Assert.True(isFail <| run lBool "True")
-        Assert.True(isFail <| run lBool "False")
+        Assert.True(isFail <| run' lBool "True")
+        Assert.True(isFail <| run' lBool "False")
 
     [<Test>]
     member x.``Char`` () =
-        let r = run lChar
+        let r = run' lChar
         Assert.True(isSucc (VChar 'a') <| r "'a'")
         Assert.True(isSucc (VChar 'x') <| r "'x'")
         Assert.True(isSucc (VChar '7') <| r "'7'")
@@ -55,7 +60,7 @@ type ``Literal parsing``() =
 
     [<Test>]
     member x.``Int`` () =
-        let r = run lInt
+        let r = run' lInt
         Assert.True(isSucc (VInt 42) <| r "42")
         Assert.True(isSucc (VInt 42) <| r "+42")
         Assert.True(isSucc (VInt -7) <| r "-7")
@@ -65,31 +70,29 @@ type ``Literal parsing``() =
         Assert.True(isSucc (VInt 0) <| r "-0")
         
         Assert.True(isFail <| r "3.14")
-        Assert.True(isFail <| r "++7")
-        Assert.True(isFail <| r "--7")
 
 [<TestFixture>]
 type ``Type parsing``() =
     
     [<Test>]
     member x.``Unit`` () =
-        Assert.True(isSucc TUnit <| run tUnit "unit")
+        Assert.True(isSucc TUnit <| run' tUnit "unit")
 
     [<Test>]
     member x.``Bool`` () =
-        Assert.True(isSucc TBool <| run tBool "bool")
+        Assert.True(isSucc TBool <| run' tBool "bool")
 
     [<Test>]
     member x.``Char`` () =
-        Assert.True(isSucc TChar <| run tChar "char")
+        Assert.True(isSucc TChar <| run' tChar "char")
 
     [<Test>]
     member x.``Int`` () =
-        Assert.True(isSucc TInt <| run tInt "int")
+        Assert.True(isSucc TInt <| run' tInt "int")
 
     [<Test>]
     member x.``Var`` () =
-        let r = run tVar
+        let r = run' tVar
         Assert.True(isSucc (TVar "'a") <| r "'a")
         Assert.True(isSucc (TVar "'T") <| r "'T")
         Assert.True(isSucc (TVar "'Type") <| r "'Type")
@@ -100,7 +103,7 @@ type ``Type parsing``() =
 
     [<Test>]
     member x.``Datatype`` () =
-        let r = run tDatatype
+        let r = run' tDatatype
         Assert.True(isSucc (TDatatype ("A", [])) <| r "A")
         Assert.True(isSucc (TDatatype ("Tt", [])) <| r "Tt")
         Assert.True(isSucc (TDatatype ("Option", [])) <| r "Option")
@@ -111,7 +114,7 @@ type ``Type parsing``() =
         
     [<Test>]
     member x.``Lambda`` () =
-        let r = run tLambda
+        let r = run' tLambda
         Assert.True(isSucc (TLambda(TInt, TInt)) <| r "int -> int")
         Assert.True(isSucc (TLambda(TInt, TInt)) <| r "(int -> int)")
         Assert.True(isSucc (TLambda(TChar, TBool)) <| r "((char -> bool))")
@@ -147,7 +150,7 @@ type ``Pattern parsing``() =
     
     [<Test>]
     member x.``Identifier`` () =
-        let r = run pIdent
+        let r = run' pIdent
         Assert.True(isSucc (PIdent{Name = "function1"}) <| r "function1")
         Assert.True(isSucc (PIdent{Name = "_arg1"}) <| r "_arg1")
         Assert.True(isSucc (PIdent{Name = "g'"}) <| r "g'")
@@ -160,7 +163,7 @@ type ``Pattern parsing``() =
 
     [<Test>]
     member x.``Literal`` () =
-        let r = run pLiteral
+        let r = run' pLiteral
         Assert.True(isSucc (PLiteral{Value = VUnit}) <| r "()")
         Assert.True(isSucc (PLiteral{Value = VInt 123}) <| r "123")
         Assert.True(isSucc (PLiteral{Value = VInt -42}) <| r "-42")
@@ -172,17 +175,17 @@ type ``Pattern parsing``() =
 
     [<Test>]
     member x.``Wildcard`` () =
-        Assert.True(isSucc PWildcard <| run pWildcard "_")
+        Assert.True(isSucc PWildcard <| run' pWildcard "_")
 
     [<Test>]
     member x.``Constructor`` () =
-        let r = run pCtor
-        Assert.True(isSucc (PCtor("A", [PLiteral{Value = VInt 123}])) <| r "A 123")
+        let r = run' pCtor
+        Assert.True(isSucc (PCtor("A", [PLiteral{Value = VInt 123}; PIdent{Name = "a"}])) <| r "A   123 a")
         Assert.True(isSucc (PCtor("A", [PLiteral{Value = VChar 'x'}])) <| r "A 'x'")
         Assert.True(isSucc (PCtor("A", [PWildcard])) <| r "A _")
         Assert.True(isSucc (PCtor("A", [PLiteral{Value = VBool true}])) <| r "A true")
         Assert.True(isSucc (PCtor("X", [PLiteral{Value = VBool false}])) <| r "X(false)")
-        Assert.True(isSucc (PCtor("X", [PIdent{Name = "x"}])) <| r "X(x)")
+        Assert.True(isSucc (PCtor("X", [PIdent{Name = "x"}])) <| r "X  (x)")
         Assert.True(isSucc (PCtor("X", [PIdent{Name = "y"}])) <| r "X y")
 
 
@@ -195,7 +198,7 @@ type ``Expression parsing``() =
     
     [<Test>]
     member x.``Binary`` () =      
-        let r = run eBinary
+        let r = run' eBinary
         // Arithmetic
         Assert.True(isSucc (EBinary{Op = BAdd
                                     Arg1 = ELiteral{Value = VInt 4}
@@ -322,7 +325,7 @@ type ``Expression parsing``() =
                         <| r "4 * (2 + 3) * 7 + 5 <= x || false == b && (k < n / 2 || f 'x')")
     [<Test>]
     member x.``Unary`` () =      
-        let r = run eUnary
+        let r = run' eUnary
         Assert.True(isSucc (EUnary{ Op = UNeg
                                     Arg = ELiteral{ Value = VInt 5 }
                            }) <| r "-(5)")
@@ -341,7 +344,7 @@ type ``Expression parsing``() =
 
     [<Test>]
     member x.``Lambda`` () =      
-        let r = run eLambda
+        let r = run' eLambda
         Assert.True(isSucc (ELambda{ Arg = {EIdent.Name = "x"}
                                      Body = EBinary{Op = BAdd
                                                     Arg1 = EIdent{ Name = "x" }
@@ -371,7 +374,7 @@ type ``Expression parsing``() =
 
     [<Test>]
     member x.``Function Applying`` () =      
-        let r = run eFunApp
+        let r = run' eFunApp
         Assert.True(isSucc 
                      (EFunApp{ Func = EIdent{ Name = "f" }
                                Arg = EIdent{ Name = "x" }
@@ -400,7 +403,7 @@ type ``Expression parsing``() =
 
     [<Test>]
     member x.``If Then Else`` () =      
-        let r = run eIfElse
+        let r = run' eIfElse
         let mkId x = EIdent{ Name = x }
         Assert.True(isSucc (
                                 EIfElse{
@@ -427,7 +430,7 @@ type ``Expression parsing``() =
                    
     [<Test>]
     member x.``Let in`` () =      
-        let r = run eLetIn
+        let r = run' eLetIn
         let mkIde x = EIdent{ Name = x }
         let mkIdt x = { EIdent.Name = x }
         let mkLit i = ELiteral{ Value = VInt i } 
@@ -466,7 +469,7 @@ type ``Expression parsing``() =
                       
     [<Test>]
     member x.``Case Of`` () =      
-        let r = run eCaseOf
+        let r = run' eCaseOf
         Assert.True(isSucc (
                                 ECaseOf{
                                     Matching = mkIde "x"
@@ -478,8 +481,7 @@ type ``Expression parsing``() =
                                             (PWildcard, mkLit -1)
                                         ]
                                 }
-                           ) <| r """
-                                  case x of
+                           ) <| r """case x of
                                   | 1 -> 0
                                   | A y -> 1
                                   | z -> 2
@@ -496,7 +498,7 @@ type ``Declaration parsing``() =
 
     [<Test>]
     member x.``Value`` () =      
-        let r = run dValue
+        let r = run' dValue
         Assert.True(isSucc (
                                 DValue{
                                     Type = TInt
@@ -520,7 +522,7 @@ type ``Declaration parsing``() =
                            ) <| r "def val :: int; abc1 = f x * 2;")
     [<Test>]
     member x.``Function`` () =      
-        let r = run dFunction
+        let r = run' dFunction
         Assert.True(isSucc (
                                 DFunction{
                                     Type = TLambda(TInt, TInt)
@@ -571,7 +573,7 @@ type ``Declaration parsing``() =
                            
     [<Test>]
     member x.``Datatype`` () =      
-        let r = run dDatatype
+        let r = run' dDatatype
         Assert.True(isSucc (
                                 DDatatype{
                                     Name = mkIdt "A"
@@ -604,7 +606,7 @@ type ``Program parsing``() =
     
     [<Test>]
     member x.``Program1`` () =      
-        let r = parse
+        let r = run' program
         Assert.True(isSucc (
                              [DDatatype
                                 {Name = {Name = "List";};
@@ -694,16 +696,11 @@ type ``Program parsing``() =
                                                        Arg = ELiteral {Value = VInt 5;};};}]
                            ) <| r """
 
-/*
-
-    Multiline comment :)
-
-*/
 datatype List 'a = 
 | Cons 'a (List 'a)
 | Nil
 end  
-                                        // just add single line comments :)
+
 def fun :: 'a -> (List 'a)
 mk x = [x]
 
@@ -738,7 +735,7 @@ type ``Sugar of Lists``() =
 
     [<Test>]
     member x.``Pattern-matching`` () =      
-        let r = run eCaseOf
+        let r = run' eCaseOf
         Assert.True(isSucc (
                                 ECaseOf
                                    {Matching = EIdent {Name = "x";};
@@ -766,8 +763,7 @@ type ``Sugar of Lists``() =
                                        ELiteral {Value = VUnit;});
                                       (PCtor ("Cons",[PIdent {Name = "x";}; PCtor ("Nil",[])]),
                                        ELiteral {Value = VUnit;})];}
-                           ) <| r """
-                                    case x of
+                           ) <| r """case x of
                                     | y : ys -> ()
                                     | x : y : xs -> ()
                                     | [] -> ()
