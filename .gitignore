@@ -1,6 +1,9 @@
 #ignore file for projects
 
+#Interpreter.sln
+#Interpreter/
+*/Backup/*
+*/UpdateLog.htm
 */*/bin/
 */*/obj/
-*/*.fsx
 *.suo
