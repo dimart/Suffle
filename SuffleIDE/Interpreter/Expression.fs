@@ -10,7 +10,7 @@ type Interpreter () =
     let vars = new Dictionary<string, Stack<Value>>()
     let funcs = new Dictionary<string, Stack<DFunction>>()
 
-    //  Return binary operator
+    ///  Return binary operator
     let rec retNumBin (op: BinaryOp): int -> int -> int = 
         match op with
         | BAdd -> (+)
@@ -35,14 +35,13 @@ type Interpreter () =
         | BOr -> (||)
         | _ -> raise (TypeMismatchException ("Wrong operation", lineNum))
 
-    //  Evaluate type expression
-    //  ETyped
+    ///  Evaluate type expression
+    ///  ETyped
     and evalType (x: Expression) = 
         //toWrite
         VUnit
 
-    //  Eval identifier
-    //  EIdentifier
+    ///  Eval identifier
     and evalIdent (id: EIdent) = 
 //            try
         try 
@@ -54,17 +53,17 @@ type Interpreter () =
 //                //  if identifier isn't defined - we fail to interpret (? - mb need to do on top level)
 //                | VariableNotFoundException name -> printfn "Variable \"%A\" not found" name
 
-    //  Eval literal
+    ///  Eval literal
     and evalLiteral (liter: ELiteral) = 
         liter.Value
         
-    //  Eval "if" statement 
+    ///  Eval "if" statement 
     and evalIf (stmnt: EIfElse) = 
         match (evalExpr stmnt.Cond) with
         | VBool cond -> evalExpr (if cond then stmnt.OnTrue else stmnt.OnFalse)
         | _ -> raise (TypeMismatchException ("Expected type \'bool\'.", lineNum))
         
-    //  Eval "let" stmnt
+    ///  Eval "let" stmnt
     and evalLet (stmnt: ELetIn) = 
         match stmnt.Binding with
         | DValue x -> (vars.Item x.Name.Name).Push <| evalExpr x.Value
@@ -73,7 +72,7 @@ type Interpreter () =
         | _ -> ()
         evalExpr stmnt.Body
             
-    //  Eval unary stmnt
+    ///  Eval unary stmnt
     and evalUnary (stmnt: EUnary) = 
         let evaluated = evalExpr stmnt.Arg
         match stmnt.Op with
@@ -84,7 +83,7 @@ type Interpreter () =
                     | VBool x -> VBool <| not x
                     | _ -> raise (TypeMismatchException ("Bool expected", lineNum))
 
-    //  Eval binary statement
+    ///  Eval binary statement
     and evalBinary (stmnt: EBinary) = 
         let evaluated1 = evalExpr stmnt.Arg1
         let evaluated2 = evalExpr stmnt.Arg2
@@ -95,14 +94,15 @@ type Interpreter () =
                     | _ -> raise (TypeMismatchException ("Int expected", lineNum))
         | VBool x -> match evaluated2 with
                         | VBool y -> VBool<| retBoolBin stmnt.Op x y
-                        | _ -> raise (TypeMismatchException ("Int expected", lineNum))
-        | _ -> raise (TypeMismatchException ("Int expected", lineNum))
+                        | _ -> raise (TypeMismatchException ("Bool expected", lineNum))
+        | _ -> raise (TypeMismatchException ("Int or Bool expected", lineNum))
 
+    ///  Eval lambda expression
     and evalLambda (stmnt: ELambda) = 
-        match stmnt.Arg with
-        | 
+        let arg = stmnt.Arg.Name
+        
 
-    //  Evaluate expression
+    ///  Evaluate expression
     and evalExpr (expr: Expression) = 
                             
     (*                            

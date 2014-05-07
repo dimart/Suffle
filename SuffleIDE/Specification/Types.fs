@@ -105,10 +105,6 @@ and DValue =
         Name : EIdent
         Value : Expression
     }
-and DType =
-    {
-        Type : Type
-    }
 and DDatatype =
     {
         Name : EIdent
