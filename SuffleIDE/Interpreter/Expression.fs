@@ -7,8 +7,52 @@ open Interpreter.ExceptionList
 let lineNum = 0
 
 type Interpreter () = 
-    let vars = new Dictionary<string, Stack<Value>>()
-    let funcs = new Dictionary<string, Stack<DFunction>>()
+    ///  Current function context representation
+    let vars = new Dictionary<string, Value list>()
+
+    ///  Returns current function context
+    let retContext () = 
+        let mutable toRet = []
+        for x in vars do
+            toRet <- (x.Key, List.head x.Value)::toRet
+        toRet
+
+    ///  Renews current context
+    let setContext (x: 'a list) = 
+        vars.Clear()
+        for (key, value) in x do
+            vars.Add (key, (value::[]))
+
+    ///  Add variable to context
+    let addToContext (key, value) = 
+        try
+            let tmp = vars.Item key
+            vars.Remove key |> ignore
+            vars.Add (key, value::tmp)
+        with
+        | :? KeyNotFoundException -> raise (VariableNotFoundException (key, lineNum))
+//        | :? System.ArgumentException -> raise (VariableNotFoundException (key, lineNum))
+
+    ///  Get variable from context
+    let getFromContext name = 
+        try 
+            List.head (vars.Item name)
+        with
+        //  Returns an exception to IDE to solve
+        | :? KeyNotFoundException -> raise (VariableNotFoundException (name, lineNum))
+        | :? System.ArgumentException -> raise (VariableNotFoundException (name, lineNum))
+
+    let removeFromContext name =
+        try
+            let tmp = vars.Item name
+            match tmp with
+            | _::[] -> vars.Remove name |> ignore
+            | [] -> vars.Remove name |> ignore      //  Не должно случиться
+            | _::t ->
+                vars.Remove name |> ignore
+                vars.Add (name, t)
+        with
+        | :? KeyNotFoundException -> ()
 
     ///  Return binary operator
     let rec retNumBin (op: BinaryOp): int -> int -> int = 
@@ -35,44 +79,54 @@ type Interpreter () =
         | BOr -> (||)
         | _ -> raise (TypeMismatchException ("Wrong operation", lineNum))
 
+    ///  Evaluate closure
+    and evalClosure (x: Value) =
+        match x with
+        | VClosure (variables, expr) -> 
+            let x = vars
+            setContext variables
+            let toRet = evalExpr expr
+            vars.Clear()
+            for i in x do
+                vars.Add (i.Key, i.Value)
+            toRet
+
+        | _ -> raise (TypeMismatchException ("Closure expected", lineNum))
+
+
     ///  Evaluate type expression
     ///  ETyped
     and evalType (x: Expression) = 
         //toWrite
         VUnit
 
-    ///  Eval identifier
+    ///  Evaluate identifier
     and evalIdent (id: EIdent) = 
-//            try
-        try 
-            (vars.Item id.Name).Peek()
-        with
-        | :? KeyNotFoundException -> raise (VariableNotFoundException (id.Name, lineNum))
-        | :? System.InvalidOperationException -> raise (VariableNotFoundException (id.Name, lineNum))
-//            with
-//                //  if identifier isn't defined - we fail to interpret (? - mb need to do on top level)
-//                | VariableNotFoundException name -> printfn "Variable \"%A\" not found" name
+        getFromContext id.Name
 
-    ///  Eval literal
+    ///  Evaluate literal
     and evalLiteral (liter: ELiteral) = 
         liter.Value
         
-    ///  Eval "if" statement 
+    ///  Evaluate "if" statement 
     and evalIf (stmnt: EIfElse) = 
         match (evalExpr stmnt.Cond) with
         | VBool cond -> evalExpr (if cond then stmnt.OnTrue else stmnt.OnFalse)
-        | _ -> raise (TypeMismatchException ("Expected type \'bool\'.", lineNum))
+        | _ -> raise (TypeMismatchException ("Bool expected", lineNum))
         
-    ///  Eval "let" stmnt
+    ///  Evaluate "let" stmnt
     and evalLet (stmnt: ELetIn) = 
         match stmnt.Binding with
-        | DValue x -> (vars.Item x.Name.Name).Push <| evalExpr x.Value
+        | DValue x -> 
+            addToContext (x.Name.Name, (evalExpr x.Value))
+            let toRet = evalExpr stmnt.Body
+            removeFromContext x.Name.Name
+            toRet
         //  May be need to pass closure or lambda - dunno now, check on it later
-        | DFunction x -> (funcs.Item x.Name.Name).Push <| x
-        | _ -> ()
-        evalExpr stmnt.Body
+//        | DFunction x -> (funcs.Item x.Name.Name).Push <| x
+        | _ -> raise (TypeMismatchException ("Declaration expected", lineNum))
             
-    ///  Eval unary stmnt
+    ///  Evaluate unary stmnt
     and evalUnary (stmnt: EUnary) = 
         let evaluated = evalExpr stmnt.Arg
         match stmnt.Op with
@@ -83,7 +137,7 @@ type Interpreter () =
                     | VBool x -> VBool <| not x
                     | _ -> raise (TypeMismatchException ("Bool expected", lineNum))
 
-    ///  Eval binary statement
+    ///  Evaluate binary statement
     and evalBinary (stmnt: EBinary) = 
         let evaluated1 = evalExpr stmnt.Arg1
         let evaluated2 = evalExpr stmnt.Arg2
@@ -97,10 +151,27 @@ type Interpreter () =
                         | _ -> raise (TypeMismatchException ("Bool expected", lineNum))
         | _ -> raise (TypeMismatchException ("Int or Bool expected", lineNum))
 
-    ///  Eval lambda expression
+    ///  Evaluate lambda expression
     and evalLambda (stmnt: ELambda) = 
-        let arg = stmnt.Arg.Name
-        
+        VClosure (retContext(), ELambda stmnt)
+
+    ///  Evaluate function application
+    and evalFunApp (stmnt: EFunApp) = 
+        let arg = evalExpr stmnt.Arg
+        match stmnt.Func with
+        | ELambda x -> 
+            let clos = evalLambda x
+            let arg = (x.Arg.Name, arg)
+            match clos with
+            | VClosure (a, b) -> evalClosure <| VClosure (arg::a, b)
+            | _ -> raise (TypeMismatchException ("Closure expected", lineNum))
+        | _ -> raise (TypeMismatchException ("Lambda function excpected", lineNum))
+
+
+    ///  Evaluate 'case ... of ...' expression
+    and evalCaseOf (stmnt: ECaseOf) = 
+        VInt 5
+
 
     ///  Evaluate expression
     and evalExpr (expr: Expression) = 
