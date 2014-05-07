@@ -1,0 +1,64 @@
+// This is snippets for Suffle 0.2
+// Which parses correctly
+
+datatype List 'a =
+| Cons 'a (List 'a)
+| Nil
+end  
+
+def fun :: 'a -> (List 'a)
+mk x = [x]
+
+def fun :: (List 'a) -> int
+len list = 
+    case list of
+    | [] -> 0
+    | _ : rest -> len rest + 1
+    end
+
+def fun :: 'a -> (List 'a) -> (List 'a)
+push x list = 
+    case list of
+    | [] -> [x]
+    | x' : xs -> x' : (push x xs)
+    end
+
+def fun :: (List 'a) -> (List 'a)
+rev xs =
+    let 
+        def fun :: (List 'a) -> (List 'a) -> (List 'a)
+        rev' xs rest = 
+            case rest of
+            | [] -> xs
+            | x : rs -> rev' (x : xs) rs
+    in
+        rev' [] xs
+    end
+         
+def fun :: ('a -> 'b) -> (List 'a) -> (List 'b)               
+map f xs =
+    case xs of
+    | [] -> []
+    | x : xs' -> f x : (map f xs')
+    end
+    
+def fun :: ('a -> 'b -> 'a) -> 'a -> (List 'b) -> 'a
+foldl f acc xs =
+    case xs of
+    | [] -> acc
+    | x : xs' -> foldl f (f acc x) xs'
+    end
+    
+def fun :: ('b -> 'a -> 'a) -> (List 'b) -> 'a -> 'a
+foldr f xs acc =
+    case xs of
+    | [] -> acc
+    | x : xs' -> f x (foldr f xs' acc)
+    end  
+            
+def val :: (List int)
+xs = mk 1
+
+def val :: (List int)
+y = push 3 (push 2 xs)          
+                           
