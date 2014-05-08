@@ -1,51 +1,60 @@
 ﻿module Parser.Types
 
-open ParserCombinators.Core
+open FParsec
 open Suffle.Specification.Types
 open Parser.Auxiliary
 
-let tUnit : Parser<Type> = 
-    pstr "unit" >>% TUnit
+let tUnit stream = 
+    pstring "unit" >>% TUnit
+    <??> "unit type"
+    <| stream
 
-let tBool : Parser<Type> = 
-    pstr "bool" >>% TBool
+let tBool stream = 
+    pstring "bool" >>% TBool
+    <??> "bool type"
+    <| stream
 
-let tChar : Parser<Type> = 
-    pstr "char" >>% TChar
+let tChar stream = 
+    pstring "char" >>% TChar
+    <??> "char type"  
+    <| stream
 
-let tInt  : Parser<Type> = 
-    pstr "int"  >>% TInt
+let tInt  stream = 
+    pstring "int"  >>% TInt
+    <??> "int type" 
+    <| stream
 
-let tVar : Parser<Type> = 
-    pvartype |>> TVar
+let tVar stream = 
+    pvartype |>> TVar 
+    <??> "variable type"     
+    <| stream
 
-let rec tDatatype pi =
-    let c = 
-        parse {
-            let! c' = ctor
-            return TDatatype(c', [])
-        }
-    let cp =
-        parse {
-            let! c' = ctor
-            let! ptypes = many1 (skipws_and_comments1 tType)
-            return TDatatype(c', ptypes)
-        }
-    c <|> inbrackets cp <| pi
+let rec tDatatype stream =
+    ws_ ctor |>> (fun c -> TDatatype(c, []))
+    <??> "datatype name" 
+    <| stream
 
-and basicType : Parser<Type> = 
-    any [tUnit; tBool; tChar; tInt; tDatatype; tVar]
+and tDatatypeGeneric s =
+    ws_ ctor .>>. (many1 (ws_ tType)) |>> TDatatype
+    <??> "constructor with arguments"
+    <| s
 
-and tLambda pi = 
-    let tl =
-        parse {
-            let! a = basicType <|> inbrackets (tType)
-            let! _ = between pws (pstr "->") pws
-            let! b = tType
-            return TLambda(a, b)
-        }
-    tl <|> inbrackets tLambda <| pi
+and basicType stream = 
+    choice [tUnit; tBool; tChar; tInt; tVar; tDatatype]
+    <??> "basic type"
+    <| stream
 
-and tType pi =
-    let t = basicType <|> tLambda
-    t <|> inbrackets tType <| pi
+and tLambda stream =
+    let left = ws_ (inbrackets tType <|> basicType <|> tDatatype)
+    let arrow = ws_ (pstring "->")
+    let right = ws_ tType
+    let tl = left .>> arrow .>>. right |>> TLambda
+    //attempt tl <|> inbrackets tLambda
+    tl
+    <??> "lambda type"
+    <| stream
+
+and tType stream =
+    choice [attempt tLambda; inbrackets tType; attempt tDatatypeGeneric; basicType]
+    <??> "type declaration"
+    <| stream

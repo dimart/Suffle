@@ -13,9 +13,11 @@ let refactors =
         (sprintf "%s+" ws, " ")
     ]
 
-let preprocess (s : string) =
+let preprocess (s : string) = s
+(*
     let rec prep s =
         function
         | [] -> s
         | (pt : string, re : string) :: xs -> prep (Regex.Replace(s, pt, re)) xs
     prep s refactors
+    *)

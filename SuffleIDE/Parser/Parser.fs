@@ -1,6 +1,6 @@
 ﻿module Suffle.Parser
 
-open ParserCombinators.Core
+open FParsec
 open Parser.Structures
 open Parser.Preprocessing
 
