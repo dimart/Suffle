@@ -39,8 +39,7 @@ let primary stream =
     <| stream
 
 let rec arg stream =
-    choice [primary; attempt eListEmpty; eList <!> "arg as list"; inbrackets expression <!> "arg as expr"]
-    <!> "arg" 
+    choice [primary; attempt eListEmpty; eList; inbrackets expression]
     <| stream
 
 and eUnary stream = 
@@ -62,7 +61,7 @@ and eBinary stream =
         | b :: bs -> leftAssos (mkbinp bs) b
             
     mkbinp binPrioritised
-    <!> "binary operation"
+    <??> "binary operation"
     <| stream
 
 and eLambda stream =
@@ -83,21 +82,21 @@ and eLambda stream =
                         (ld (mId args.Head) body)
                         args.Tail
         )
-    <!> "lambda"
+    <??> "lambda"
     <| stream
         
 and eFunApp stream =
     let fa f a = EFunApp{ Func = f; Arg = a }
-    let pf = ws_ <| attempt eIdent <|> inbrackets expression <!> "function ident"
-    let arg0 = attempt (ws_ arg) <!> "arg0"
-    let args = many arg0 <!> "args"
-    let pfa = tuple3 pf arg0 args
+    let pf = ws_ <| attempt eIdent <|> inbrackets expression 
+    let arg0 = attempt (ws_ arg)
+    let args = many arg0
+    tuple3 pf arg0 args
                 |>> (fun (f, x, xs) ->
                         List.fold (fun f' a' -> fa f' a') 
                                     (fa f <| x) 
                                     xs
                     )
-    pfa <!> "eFunApp"
+    <??> "function application"
     <| stream
 
 and eIfElse stream =
@@ -111,7 +110,7 @@ and eIfElse stream =
 
     pIfElse
     |>> (fun (cond, onTrue, onFalse) -> EIfElse{ Cond = cond; OnTrue = onTrue; OnFalse = onFalse })
-    <!> "if-else"
+    <??> "if-else"
     <| stream
     
 and eLetIn stream = 
@@ -122,10 +121,7 @@ and eLetIn stream =
         p_let
         >>. many1 (ws_ declaration)
         |>> List.rev
-        <!> "bingings in let"
-    let p_body =
-        between p_in pEndKeyword expression
-        <!> "body in let"
+    let p_body = between p_in pEndKeyword expression
 
     p_binds .>>. p_body
     |>> (fun (bi, bo) ->
@@ -133,21 +129,21 @@ and eLetIn stream =
                       (mli (bi.Head) bo)
                       bi.Tail
         )
-    <!> "let-in"
+    <??> "let-in"
     <| stream
 
 and eCaseOf stream =
-    let p_pipe = ws_ (pstring sPipe) <!> "pipe"
-    let arrow = ws_ (pstring sArrow)  <!> "arrow"
+    let p_pipe = ws_ (pstring sPipe) 
+    let arrow = ws_ (pstring sArrow) 
     let patternLine =
         p_pipe
         >>. ws_ pattern
         .>> arrow
-        .>>. ws_ expression <!> "pattern line"
+        .>>. ws_ expression
 
     let p_case = ws_ <| pstring "case"
     let p_of = ws_ <| pstring "of"
-    let plist = many1 patternLine <!> "many pattern lines"
+    let plist = many1 patternLine
 
     p_case
     >>. (ws_ expression)
@@ -157,14 +153,14 @@ and eCaseOf stream =
     |>> (fun (sample, plist) ->
             ECaseOf{ Matching = sample; Patterns = plist }
         )
-    <!> "case-of"
+    <??> "case-of"
     <| stream
 
 and eListCons stream =
     let fa f a = EFunApp{ Func = f; Arg = a }
     let mkIde name = EIdent{ Name = name }
-    let left = attempt eFunApp <|> (ws_ arg) <!> "cons left"
-    let cons = _ws_ <| pstring Lists.consOp    <!> "cons op"
+    let left = attempt eFunApp <|> (ws_ arg) 
+    let cons = _ws_ <| pstring Lists.consOp   
     
     left
     .>> cons
@@ -172,13 +168,13 @@ and eListCons stream =
     |>> (fun (x, xs) ->
             fa (fa (mkIde Lists.consName) x) xs
         )
-    <!> "list constructor (:)"
+    <??> "list constructor (:)"
     <| stream
 
 and eListEmpty stream =
     let empt = pstring <| Lists.openBracket + Lists.closeBracket 
     empt >>% EIdent{ Name = Lists.emptName } 
-    <!> "empty list"
+    <??> "empty list"
     <| stream
 
 and eList stream =
@@ -194,7 +190,7 @@ and eList stream =
             let ys = List.foldBack (fun x acc -> fa (fa (mkIde Lists.consName) x) acc) xs (mkIde Lists.emptName)
             fa (fa (mkIde Lists.consName) x) ys
         )
-    <!> "list"
+    <??> "list"
     <| stream
 
 and expression stream = 
@@ -211,8 +207,8 @@ and expression stream =
                     eIdent
                     eLambda
                 ]
-    let p = attempt e <|> inbrackets expression 
-    p <!> "expression"
+    attempt e <|> inbrackets expression 
+    <??> "expression"
     <| stream
                                                              
 
@@ -223,15 +219,14 @@ and dValue stream =
     let p_val = pSepString sValKeyword
     let p_typeOp = pWsAroundString "::"
     let p_name = _ws _eident
-    let p_binding = pWsAroundString sBinding <!> " (=) "
-    let p_typedef = p_def >>. p_val >>. p_typeOp >>. tType .>> pLineEnding <!> "value type"
+    let p_binding = pWsAroundString sBinding
+    let p_typedef = p_def >>. p_val >>. p_typeOp >>. tType .>> pLineEnding 
     let p_value = p_binding >>. ws_ expression .>> pLineEnding
 
     tuple3 p_typedef p_name p_value
     |>> (fun (t, name, value) ->
             DValue{ Type = t; Name = name; Value = value }
         )
-    <!> "value declaration"
     <?> "value declaration"
     <| stream 
 
@@ -244,12 +239,12 @@ and dFunction stream =
     let p_typeOp = pWsAroundString "::"
     let p_name = ws_ _eident
     let p_binding = pWsAroundString sBinding
-    let p_typedef = p_def >>. p_fun >>. p_typeOp >>. tType .>> pLineEnding <!> "function type"
+    let p_typedef = p_def >>. p_fun >>. p_typeOp >>. tType .>> pLineEnding
     let p_arg = ws_ _eident
     let p_body = p_binding >>. ws_ expression .>> pLineEnding
 
     tuple5 p_typedef
-           (p_name <!> "function name")
+           p_name
            p_arg
            (many p_arg)
            p_body
@@ -257,7 +252,6 @@ and dFunction stream =
              let body' = List.fold (fun acc x -> ld x acc) body args
              DFunction{ Type = t; Name = name; Arg = x; Body = body' }
         )       
-    <!> "function declaration"
     <?> "function declaration"
     <| stream  
 
@@ -277,16 +271,13 @@ and dDatatype stream =
     |>> (fun (name, ptypes, clist) ->
              DDatatype{ Name = {EIdent.Name = name}; Params = ptypes; Ctors = clist }
         )      
-    <!> "datatype declaration"
-    <?> "datatype declaration"
+    <??> "datatype declaration"
     <| stream
 
 and declaration stream =
     choice [attempt dValue; attempt dFunction; dDatatype]
-    <!> "declaration"
-    <?> "declaration"
+    <??> "declaration"
     <| stream
 
-let program stream = 
+let program : Parser<Program, _> = 
     _ws_ (many declaration)
-    <| stream

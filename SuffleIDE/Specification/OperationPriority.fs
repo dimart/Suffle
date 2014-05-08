@@ -7,11 +7,6 @@ let binaryOps =
      BAnd; BOr;
      BEQ; BNEQ; BNGT; BNLT; BGT; BLT ]
 
-(*
-let binaryOps = 
-    [BAdd]
-*)
-
 let priority binOp =
     match binOp with
     // Arithmetics

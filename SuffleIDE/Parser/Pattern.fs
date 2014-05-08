@@ -21,7 +21,7 @@ let pLiteral stream =
 
 let pWildcard stream =
     pstring sWildcard >>% PWildcard
-    <??> "wildcard"
+    <??> "wildcard pattern"
     <| stream
 
 let basicpp stream = 
