@@ -30,7 +30,7 @@ let pquote stream = pchar '\'' <| stream
 
 let ws s = spaces <| s
 let _ws p = ws >>? p
-let ws_ p = p .>>? ws <!> "whitespace after"
+let ws_ p = p .>>? ws
 let _ws_ p = ws >>? p .>>? ws       
 let ws1 = spaces1
 let _ws1 p = ws1 >>? p
@@ -40,8 +40,8 @@ let _ws1_ p = ws1 >>? p .>>? ws1
 let ident stream =
     let head = pchar '_' <|> (anyOf ['a'..'z'])
     let tail = many pIdentSymbols
-    let p = head >|>> tail |>> chars2str
-    p <??> "identifier" 
+    head >|>> tail |>> chars2str
+    <??> "identifier" 
     <| stream
 
 let ctor stream = 

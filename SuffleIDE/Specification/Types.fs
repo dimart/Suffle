@@ -30,10 +30,7 @@ and Value =
 
 // *** AST ***
 
-and ASTNode = 
-| Prog of Declaration list
-| Expr of Expression
-| Decl of Declaration
+and Program = Declaration list
 
 and Declaration =
 | DValue of DValue

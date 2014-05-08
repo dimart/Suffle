@@ -118,5 +118,5 @@ let rec evalExpr (expr: Expression) =
     | EUnary x -> evalUnary x
     | _ -> failwith "Not Emplemented Pattern"
     
-let a = Expr (EBinary {Op = BAdd; Arg1 = ELiteral {Value = VInt 5}; Arg2 = ELiteral {Value = VInt 7}})
+let a = (EBinary {Op = BAdd; Arg1 = ELiteral {Value = VInt 5}; Arg2 = ELiteral {Value = VInt 7}})
 //eval a Map.empty Map.empty

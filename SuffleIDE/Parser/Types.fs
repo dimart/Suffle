@@ -48,9 +48,7 @@ and tLambda stream =
     let left = ws_ (inbrackets tType <|> basicType <|> tDatatype)
     let arrow = ws_ (pstring "->")
     let right = ws_ tType
-    let tl = left .>> arrow .>>. right |>> TLambda
-    //attempt tl <|> inbrackets tLambda
-    tl
+    left .>> arrow .>>. right |>> TLambda
     <??> "lambda type"
     <| stream
 
