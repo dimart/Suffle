@@ -14,5 +14,5 @@ let uNot stream =
     <| stream
 
 let unaries stream = 
-    any [uNeg; uNot]  
+    choice [uNeg; uNot]  
     <| stream

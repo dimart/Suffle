@@ -5,7 +5,7 @@ open Suffle.Specification.Types
 let binaryOps = 
     [BAdd; BSub; BDiv; BMul;
      BAnd; BOr;
-     BEQ; BNEQ; BGT; BLT; BNGT; BNLT]
+     BEQ; BNEQ; BNGT; BNLT; BGT; BLT ]
 
 (*
 let binaryOps = 

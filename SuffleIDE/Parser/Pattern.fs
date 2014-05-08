@@ -11,51 +11,60 @@ open Specification.Sugar
 
 let pIdent stream = 
     ident |>> (fun n -> PIdent{ Name = n })
+    <??> "identifier"
     <| stream
 
 let pLiteral stream = 
     literals |>> (fun v -> PLiteral{ Value = v })
+    <??> "literal"
     <| stream
 
 let pWildcard stream =
     pstring sWildcard >>% PWildcard
+    <??> "wildcard"
     <| stream
 
 let basicpp stream = 
-    any [pWildcard; pLiteral; pIdent]
+    choice [pWildcard; pLiteral; pIdent]
     <| stream
 
 let rec pCtor stream =
-    let bp = skipws_before (inbrackets pattern) <??> "pCtor, inbrackets pattern"
-    let basic = (skipws_before1 basicpp) <??> "pCtor, basic"
+    let bp = ws_ (inbrackets pattern)
+    let basic = (ws_ basicpp) 
     let ctor_arg = attempt basic <|> bp
-    ctor .>>. many ctor_arg |>> PCtor
+    ws_ ctor .>>. many ctor_arg |>> PCtor
+    <??> "constructor"
     <| stream 
                 
 and pListCons stream =
-    let head = ws_after <| basicpp <|> inbrackets pattern
-    let cons = ws_after <| pstring Lists.consOp
+    let head = ws_ <| basicpp <|> inbrackets pattern
+    let cons = ws_ <| pstring Lists.consOp
     let plc = head .>> cons .>>. pattern |>> (fun (h, t) -> PCtor(Lists.consName, h::[t]))
-    plc stream               
+    plc
+    <??> "list contructor (:)"
+    <| stream               
 
 and pListEmpty stream = 
     let pnil = pstring <| Lists.openBracket + Lists.closeBracket
-    pnil >>% PCtor(Lists.emptName, []) 
+    pnil >>% PCtor(Lists.emptName, [])
+    <??> "empty list" 
     <| stream
 
 and pList stream =
-    let elem = ws_after pattern
+    let elem = ws_ pattern
     let right_rec xs = List.foldBack (fun x acc -> PCtor(Lists.consName, [x; acc])) xs (PCtor(Lists.emptName, []))
-    let elems = many ((ws_after <| pstring Lists.separator) >>. elem)
+    let elems = many ((ws_ <| pstring Lists.separator) >>. elem)
     between 
-        (ws_after <| pstring Lists.openBracket) 
+        (ws_ <| pstring Lists.openBracket) 
         (pstring Lists.closeBracket) 
         (elem .>>. elems |>> (fun (x, xs) -> PCtor(Lists.consName, [x; right_rec xs])))
+    <??> "list"
     <| stream
 
 and pattern s =
-    let p = any [attempt pListEmpty; attempt pListCons; attempt pList; basicpp; pCtor ]
+    let p = choice [attempt pListEmpty; attempt pListCons; attempt pList; basicpp; pCtor]
     inbrackets pattern <|> p
+    <??> "pattern"
     <| s
 
 

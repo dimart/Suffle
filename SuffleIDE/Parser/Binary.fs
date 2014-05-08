@@ -60,9 +60,9 @@ let bNLT stream =
     <| stream 
 
 let binaries stream = 
-    any [bAdd; bSub; bDiv; bMul; 
-         bAnd; bOr; 
-         bEQ; bNEQ; bGT; bLT; bNGT; bNLT]
+    choice [bAdd; bSub; bDiv; bMul; 
+            bAnd; bOr; 
+            bEQ; bNEQ; attempt bNGT; attempt bNLT; bGT; bLT]
 
 let binOp2Parser b =
     match b with
@@ -79,12 +79,12 @@ let binOp2Parser b =
     | BNEQ -> bNEQ
     | BGT  -> bGT
     | BLT  -> bLT
-    | BNGT -> bNGT
-    | BNLT -> bNLT
+    | BNGT -> attempt bNGT
+    | BNLT -> attempt bNLT
 
 let binPrioritised : Parser<BinaryOp, unit> list =
     binaryOps
     |> Seq.sortBy priority
     |> Seq.groupBy priority
-    |> Seq.map (snd >> (Seq.map binOp2Parser) >> any) //>> ((|>) stream))
+    |> Seq.map (snd >> (Seq.map binOp2Parser) >> choice)
     |> Seq.toList

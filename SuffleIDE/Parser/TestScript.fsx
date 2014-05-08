@@ -44,4 +44,37 @@ let isFail =
     | FParsec.CharParsers.Failure _ -> true
     | _ -> false
 
-let x = run' eUnary """!(a < 10)"""
+
+let x = run' program """
+             
+datatype List 'a = 
+| Cons 'a (List 'a)
+| Nil
+end  
+
+def fun :: 'a -> (List 'a)
+mk x = [x]
+
+def fun :: (List 'a) -> int
+len list = 
+    case list of
+    | [] -> 0
+    | _ : rest -> len rest + 1
+    end
+
+def fun :: (List 'a) -> (List 'a)
+rev xs =
+    let 
+        def fun :: (List 'a) -> (List 'a) -> (List 'a)
+        rev' xs rest = 
+            case rest of
+            | [] -> xs
+            | x : rs -> rev' (x : xs) rs
+            end
+    in
+        rev' [] xs
+    end
+
+def val :: (List int)
+xs = mk 5     
+ """

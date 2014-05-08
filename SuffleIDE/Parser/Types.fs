@@ -6,42 +6,55 @@ open Parser.Auxiliary
 
 let tUnit stream = 
     pstring "unit" >>% TUnit
+    <??> "unit type"
     <| stream
 
 let tBool stream = 
     pstring "bool" >>% TBool
+    <??> "bool type"
     <| stream
 
 let tChar stream = 
-    pstring "char" >>% TChar  
+    pstring "char" >>% TChar
+    <??> "char type"  
     <| stream
 
 let tInt  stream = 
-    pstring "int"  >>% TInt 
+    pstring "int"  >>% TInt
+    <??> "int type" 
     <| stream
 
 let tVar stream = 
-    pvartype |>> TVar      
+    pvartype |>> TVar 
+    <??> "variable type"     
     <| stream
 
 let rec tDatatype stream =
-    let c = ctor |>> (fun c -> TDatatype(c, []))
-    let cp = skipws_after ctor .>>. (many1 (skipws_after tType)) |>> TDatatype
-    inbrackets cp <|> c
+    ws_ ctor |>> (fun c -> TDatatype(c, []))
+    <??> "datatype name" 
     <| stream
 
+and tDatatypeGeneric s =
+    ws_ ctor .>>. (many1 (ws_ tType)) |>> TDatatype
+    <??> "constructor with arguments"
+    <| s
+
 and basicType stream = 
-    choice [attempt tDatatype; tUnit; tBool; tChar; tInt; tVar]
+    choice [tUnit; tBool; tChar; tInt; tVar; tDatatype]
+    <??> "basic type"
     <| stream
 
 and tLambda stream =
-    let left = skipws_after (attempt basicType <|> inbrackets tType)
-    let arrow = skipws_after <| pstring "->"
-    let right = skipws_after tType
+    let left = ws_ (inbrackets tType <|> basicType <|> tDatatype)
+    let arrow = ws_ (pstring "->")
+    let right = ws_ tType
     let tl = left .>> arrow .>>. right |>> TLambda
-    attempt tl <|> (inbrackets tLambda)
+    //attempt tl <|> inbrackets tLambda
+    tl
+    <??> "lambda type"
     <| stream
 
 and tType stream =
-    attempt tLambda <|> attempt (inbrackets tType) <|> basicType
+    choice [attempt tLambda; inbrackets tType; attempt tDatatypeGeneric; basicType]
+    <??> "type declaration"
     <| stream
