@@ -1,70 +1,64 @@
-﻿(*
-#r @"M:\projects\Suffle\SuffleIDE\Parser\bin\Debug\Specification.dll"
-#r @"M:\projects\Suffle\SuffleIDE\Parser\bin\Debug\ParserCombinator.dll"
+﻿
+#r @"M:\projects\Suffle\SuffleIDE\Parser\bin\Debug\Specification.dll"                    
+#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
+#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
+
+open FParsec
+open Suffle.Specification.Syntax  
+open Suffle.Specification.Types
+
 #load "Auxiliary.fs"
-#load "Literals.fs"
+#load "Literals.fs"          
 #load "Types.fs"
+#load "Pattern.fs" 
 #load "Unary.fs"
 #load "Binary.fs"
-#load "Pattern.fs"
 #load "Structures.fs"
+#load "Parser.fs"
 
-open ParserCombinators.Core
-open Parser.Structures
+open Parser.Auxiliary
+open Parser.Literals     
+open Parser.Types
 open Parser.Pattern
-            *)     
-#load "Preprocessing.fs"
+open Parser.Structures
+open Suffle.Parser
 
-open Parser.Preprocessing
+let run' p = run (p .>> eof)
 
-#time "on"
 
-let lib = """
-/*
-  This is Lists module, which'll be concatenated with user's program before it's interpretation
-*/
+let x = parse """
 
-// Standard recursive list type
-datatype List 'a =
-| Cons /* OLOLOLOLOLOLO */'a (List 'a)
-| Nil     /* sdjga;sldgasj;lgksg */
+
+datatype List 'a = 
+| Cons 'a (List 'a)
+| Nil
 end  
 
-// Returns first element of nonempty list
-def fun :: (List 'a) -> 'a
-head list =
+def fun :: 'a -> (List 'a)
+mk x = [x]
+
+def fun :: (List 'a) -> int
+len list = 
     case list of
-    | x : _ -> x
+    | [] -> 0
+    | _ : rest -> len rest + 1
     end
 
-// Returns all elements of nonempty list except the first one
 def fun :: (List 'a) -> (List 'a)
-tail list = 
-    case list of
-    | _ : xs -> xs
+rev xs =
+    let 
+        def fun :: (List 'a) -> (List 'a) -> (List 'a)
+        rev' xs rest = 
+            case rest of
+            | [] -> xs
+            | x : rs -> rev' (x : xs) rs
+            end
+    in
+        rev' [] xs
     end
-                  
-   
-"""                 
 
-open System.Text.RegularExpressions
+def val :: (List int)
+xs = mk 5     
+    
 
-let p = preprocess lib
-printfn "%A" p
-
-(*
-let x = run program """
-
-def val :: (List int)           // comment
-y = [1, 2, 3]                            
-   
-"""
-#time "off"
-
-let check x =
- match x with
- | S(_, _) -> printfn "Succ"
- | F(pi) -> printfn "%A" <| sprintf "Ln %d Col %d" pi.Position.Line pi.Position.Column
-
-check x
-*)
+"""  

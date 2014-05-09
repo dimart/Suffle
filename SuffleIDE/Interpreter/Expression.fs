@@ -196,5 +196,3 @@ type Interpreter () =
         | EFunApp x -> evalFunApp x
         | ECaseOf x -> evalCaseOf x
         | _ -> failwith "Not Implemented Pattern"
-    
-//eval a Map.empty Map.empty

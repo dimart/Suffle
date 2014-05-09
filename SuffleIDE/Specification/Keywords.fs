@@ -21,6 +21,7 @@ let keywords =
         "case"
         "of"
 
+        "def"
         "val"
         "fun"
 

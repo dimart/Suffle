@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>996eb60f-4280-4eb0-84cc-20aae9b52504</ProjectGuid>
+    <ProjectGuid>4fcf402f-c38d-4f14-906d-34615959ca05</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Tests</RootNamespace>
     <AssemblyName>Tests</AssemblyName>
@@ -33,12 +33,18 @@
     <DocumentationFile>bin\Release\Tests.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FParsec, Version=1.0.0.0, Culture=neutral, PublicKeyToken=40ccfc0a09edbb5d">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FParsecCS, Version=1.0.0.0, Culture=neutral, PublicKeyToken=40ccfc0a09edbb5d">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+    <Reference Include="nunit.framework, Version=2.6.3.13283, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -60,13 +66,23 @@
       <Project>{1164d861-9f51-4f37-9df6-3a5fecd5da5d}</Project>
       <Private>True</Private>
     </ProjectReference>
-<!--	  <ProjectReference Include="..\Parser\Parser.fsproj">
+    <!--	  <ProjectReference Include="..\Parser\Parser.fsproj">
+<!-
+=======
+    <None Include="packages.config" />
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Parser\Parser.fsproj">
+>>>>>>> 98aa78c4e0f42a32bc4daf77e3469b5e76f6b30c
+-->
+    <!--
       <Name>Parser</Name>
       <Project>{7bcc2b87-d58d-44c5-8f7c-0c6aa6cb656b}</Project>
       <Private>True</Private>
     </ProjectReference>
 -->
-	<ProjectReference Include="..\Interpreter\Interpreter.fsproj">
+    <ProjectReference Include="..\Interpreter\Interpreter.fsproj">
       <Name>Interpreter</Name>
       <Project>{19ff518a-bf43-419a-89c1-e0af5f10b954}</Project>
       <Private>True</Private>

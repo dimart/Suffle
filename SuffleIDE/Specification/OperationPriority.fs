@@ -5,12 +5,7 @@ open Suffle.Specification.Types
 let binaryOps = 
     [BAdd; BSub; BDiv; BMul;
      BAnd; BOr;
-     BEQ; BNEQ; BGT; BLT; BNGT; BNLT]
-
-(*
-let binaryOps = 
-    [BAdd]
-*)
+     BEQ; BNEQ; BNGT; BNLT; BGT; BLT ]
 
 let priority binOp =
     match binOp with

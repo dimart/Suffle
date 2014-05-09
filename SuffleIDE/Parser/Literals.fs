@@ -1,20 +1,31 @@
 ﻿module Parser.Literals
 
-open ParserCombinators.Core
+open FParsec
 open Suffle.Specification.Types
 open Suffle.Specification.Syntax
+open Parser.Auxiliary
 
-let lUnit : Parser<Value> = 
-    pstr sUnit >>% VUnit
+let lUnit stream = 
+    pstring sUnit >>% VUnit
+    <??> "unit literal - ()" 
+    <| stream 
 
-let lBool : Parser<Value> = 
-    (pstr sTrue >>% VBool true) <|> (pstr sFalse >>% VBool false)
+let lBool stream = 
+    (pstring sTrue >>% VBool true) <|> (pstring sFalse >>% VBool false)
+    <??> "true or false"
+    <| stream
 
-let lChar : Parser<Value> = 
-    between (sym '\'') (symf (fun _ -> true)) (sym '\'') |>> VChar
+let lChar stream = 
+    between pquote pquote anyChar |>> VChar
+    <??> "char literal"
+    <| stream
 
-let lInt  : Parser<Value> = 
-    pint |>> VInt
+let lInt stream = 
+    pint32 |>> VInt
+    <??> "int"
+    <| stream
 
-let literals : Parser<Value> = 
-    any [lUnit; lBool; lChar; lInt]
+let literals stream = 
+    choice [lUnit; lBool; lChar; lInt]
+    <??> "literals"
+    <| stream

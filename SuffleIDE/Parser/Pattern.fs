@@ -1,6 +1,6 @@
 ﻿module Parser.Pattern
 
-open ParserCombinators.Core
+open FParsec
 open Suffle.Specification.Types
 open Suffle.Specification.Syntax
 open Parser.Auxiliary
@@ -9,57 +9,62 @@ open Parser.Literals
 open Specification.Libs
 open Specification.Sugar
 
-let pIdent : Parser<Pattern> = 
-    parse {
-        let! name = ident
-        return PIdent{ Name = name }
-    }
+let pIdent stream = 
+    ident |>> (fun n -> PIdent{ Name = n })
+    <??> "identifier"
+    <| stream
 
-let pLiteral : Parser<Pattern> =
-    parse {
-        let! value = literals
-        return PLiteral{ Value = value }
-    }
+let pLiteral stream = 
+    literals |>> (fun v -> PLiteral{ Value = v })
+    <??> "literal"
+    <| stream
 
-let pWildcard : Parser<Pattern> =
-    pstr sWildcard >>% PWildcard
+let pWildcard stream =
+    pstring sWildcard >>% PWildcard
+    <??> "wildcard pattern"
+    <| stream
 
-let rec pCtor pi =
-    let pp = skipws_and_comments1 pattern <|> skipws_and_comments (inbrackets pattern)
-    parse {
-        let! c = ctor 
-        let! ps = many (pp <|> (inbrackets pp))
-        return PCtor(c, ps)
-    } <| pi
+let basicpp stream = 
+    choice [pWildcard; pLiteral; pIdent]
+    <| stream
 
-and basicpp = any [pWildcard; pLiteral; pIdent; pCtor]
+let rec pCtor stream =
+    let bp = ws_ (inbrackets pattern)
+    let basic = (ws_ basicpp) 
+    let ctor_arg = attempt basic <|> bp
+    ws_ ctor .>>. many ctor_arg |>> PCtor
+    <??> "constructor"
+    <| stream 
+                
+and pListCons stream =
+    let head = ws_ <| basicpp <|> inbrackets pattern
+    let cons = ws_ <| pstring Lists.consOp
+    let plc = head .>> cons .>>. pattern |>> (fun (h, t) -> PCtor(Lists.consName, h::[t]))
+    plc
+    <??> "list contructor (:)"
+    <| stream               
 
-and pListCons pi =
-    let left = basicpp <|> inbrackets pattern
-    parse {
-        let! x = left
-        let! _ = skipws_and_comments <| pstr Lists.consOp
-        let! xs = skipws_and_comments pattern
-        return PCtor(Lists.consName, [x; xs])
-    } <| pi
+and pListEmpty stream = 
+    let pnil = pstring <| Lists.openBracket + Lists.closeBracket
+    pnil >>% PCtor(Lists.emptName, [])
+    <??> "empty list" 
+    <| stream
 
-and pListEmpty pi = pstr <| Lists.openBracket + Lists.closeBracket >>% PCtor(Lists.emptName, []) <| pi
+and pList stream =
+    let elem = ws_ pattern
+    let right_rec xs = List.foldBack (fun x acc -> PCtor(Lists.consName, [x; acc])) xs (PCtor(Lists.emptName, []))
+    let elems = many ((ws_ <| pstring Lists.separator) >>. elem)
+    between 
+        (ws_ <| pstring Lists.openBracket) 
+        (pstring Lists.closeBracket) 
+        (elem .>>. elems |>> (fun (x, xs) -> PCtor(Lists.consName, [x; right_rec xs])))
+    <??> "list"
+    <| stream
 
-and pList pi =
-
-    let elem = skipws_and_comments pattern
-
-    parse {
-        let! _ = pstr Lists.openBracket
-        let! x = elem
-        let! xs = many ((skipws_and_comments <| pstr Lists.separator) >>. elem)
-        let! _ = skipws_and_comments <| pstr Lists.closeBracket
-        let ys = List.foldBack (fun x acc -> PCtor(Lists.consName, [x; acc])) xs (PCtor(Lists.emptName, []))
-        return PCtor(Lists.consName, [x; ys])
-    } <| pi
-
-and pattern pi =
-    let p = any [basicpp; pListCons; pListEmpty; pList]
-    skipws_and_comments (p <|> inbrackets pattern) <| pi
+and pattern s =
+    let p = choice [attempt pListEmpty; attempt pListCons; attempt pList; basicpp; pCtor]
+    inbrackets pattern <|> p
+    <??> "pattern"
+    <| s
 
 
