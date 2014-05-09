@@ -40,7 +40,7 @@ and tDatatypeGeneric s =
     <| s
 
 and basicType stream = 
-    choice [tUnit; tBool; tChar; tInt; tVar; tDatatype]
+    ws_ <| choice [tUnit; tBool; tChar; tInt; tVar; tDatatype]
     <??> "basic type"
     <| stream
 

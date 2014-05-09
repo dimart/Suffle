@@ -16,11 +16,10 @@ let dtProcessor (p : Program) =
                         Value = ELiteral{ Value = VCtor(ctorName, []) };
                       }
         | t::ts ->
-            let arg0 = mkId <| "arg0"
-            let args = List.init (ts.Length) (fun i -> mkId <| "arg" + (i + 1).ToString())
+            let args = List.init (types.Length) (fun i -> mkId <| "arg" + i.ToString())
             let body = List.fold (fun acc x -> mkLd x acc) (ECtor{ Args = args }) args
             let ftype = List.fold (fun acc x -> TLambda(x, acc)) t ts
-            DFunction{ Type = TLambda(ftype, type'); Name = mkId ctorName; Arg = arg0; Body = body }
+            DFunction{ Type = TLambda(ftype, type'); Name = mkId ctorName; Body = body }
                  
     let rec proc (p : Program) : Program =
         match p with 
@@ -31,12 +30,15 @@ let dtProcessor (p : Program) =
                       | DDatatype dt ->
                           let tlist = List.map TVar dt.Params
                           let type' = TDatatype(dt.Name.Name, tlist)
-                          List.map (mkDecl type') dt.Ctors
+                          let newDecls = List.map (mkDecl type') dt.Ctors
+                          newDecls @ proc ds
             d :: res
     proc p 
 
+let program = declarations .>> eof |>> dtProcessor
+
 let parse (s : string) =
-    let reply = run (program .>> eof |>> dtProcessor) s
+    let reply = run program s
     match reply with
     | Success(res, _, _) -> res
     | Failure(errMsg, _, _) -> printfn "ERROR:\n%A" errMsg; []

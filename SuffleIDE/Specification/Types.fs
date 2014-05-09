@@ -119,7 +119,6 @@ and DFunction =
     {
         Type : Type
         Name : EIdent
-        Arg : EIdent
         Body : Expression
     }
 

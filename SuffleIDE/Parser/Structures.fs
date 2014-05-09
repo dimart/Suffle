@@ -249,9 +249,9 @@ and dFunction stream =
            p_arg
            (many p_arg)
            p_body
-    |>> (fun (t, name, x, args, body) ->
-             let body' = List.fold (fun acc x -> ld x acc) body args
-             DFunction{ Type = t; Name = name; Arg = x; Body = body' }
+    |>> (fun (t, name, arg0, args, body) ->
+             let body' = List.foldBack (fun x acc -> ld x acc) (arg0::args) body 
+             DFunction{ Type = t; Name = name; Body = body' }
         )       
     <?> "function declaration"
     <| stream  
@@ -280,5 +280,5 @@ and declaration stream =
     <??> "declaration"
     <| stream
 
-let program : Parser<Program, _> = 
+let declarations = 
     _ws_ (many declaration)
