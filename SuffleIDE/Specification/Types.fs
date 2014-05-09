@@ -11,9 +11,7 @@ type Type =
 | TDatatype of string * (Type list)
 | TVar of string
 
-type Constructor = string * Type list
-
-type DataType = Constructor list
+type Ctor = string * Type list
 
 type Context = (string * Value) list
 
@@ -24,6 +22,7 @@ and Value =
 | VBool of bool
 | VChar of char
 | VInt of int
+| VCtor of string * Value list
 | VClosure of Context * Expression
 
 // *** AST ***
@@ -35,7 +34,7 @@ and Declaration =
 | DDatatype of DDatatype
 | DFunction of DFunction
 
-and Expression = 
+and Expression =
 | EIdent of EIdent
 | ELiteral of ELiteral
 | EIfElse of EIfElse
@@ -45,6 +44,7 @@ and Expression =
 | ELambda of ELambda
 | EFunApp of EFunApp
 | ECaseOf of ECaseOf
+| ECtor of ECtor
 
 // Patterns for CaseOf
 and Pattern =
@@ -93,6 +93,10 @@ and ECaseOf =
         Matching : Expression
         Patterns : (Pattern * Expression) list
     }
+and ECtor =
+    {
+        Args : EIdent list
+    }
 
 // Declarations
 and DValue =
@@ -109,7 +113,7 @@ and DDatatype =
     {
         Name : EIdent
         Params : string list
-        Ctors : DataType
+        Ctors : Ctor list
     }
 and DFunction =
     {

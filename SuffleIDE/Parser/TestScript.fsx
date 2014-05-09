@@ -14,67 +14,24 @@ open Suffle.Specification.Types
 #load "Unary.fs"
 #load "Binary.fs"
 #load "Structures.fs"
+#load "Parser.fs"
 
 open Parser.Auxiliary
 open Parser.Literals     
 open Parser.Types
 open Parser.Pattern
 open Parser.Structures
+open Suffle.Parser
 
-//#load "Auxiliary.fs"
-            
-      (*  
-open FParsec
-open Suffle.Specification.Types
-open Parser.Literals
-open Parser.Types
-open Parser.Pattern
-open Parser.Structures     
-*)
-
-let run' p s = run (p .>> eof) s
-
-let isSucc (value : 'a) =
-    function 
-    | FParsec.CharParsers.Success(v, _, _) -> v = value
-    | _ -> false
-
-let isFail =
-    function
-    | FParsec.CharParsers.Failure _ -> true
-    | _ -> false
-
-
-let x = run' program """
-             
-datatype List 'a = 
-| Cons 'a (List 'a)
-| Nil
-end  
-
-def fun :: 'a -> (List 'a)
-mk x = [x]
-
-def fun :: (List 'a) -> int
-len list = 
-    case list of
-    | [] -> 0
-    | _ : rest -> len rest + 1
+let x = parse """
+    
+    datatype A 'a 'b = 
+    | X 
+    | Y int
+    | Z (bool -> unit)
+    | W int 'a
+    | U T1 T2
+    | M (List 'b)
     end
 
-def fun :: (List 'a) -> (List 'a)
-rev xs =
-    let 
-        def fun :: (List 'a) -> (List 'a) -> (List 'a)
-        rev' xs rest = 
-            case rest of
-            | [] -> xs
-            | x : rs -> rev' (x : xs) rs
-            end
-    in
-        rev' [] xs
-    end
-
-def val :: (List int)
-xs = mk 5     
- """
+"""

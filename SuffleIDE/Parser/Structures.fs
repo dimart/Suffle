@@ -87,7 +87,8 @@ and eLambda stream =
         
 and eFunApp stream =
     let fa f a = EFunApp{ Func = f; Arg = a }
-    let pf = ws_ <| attempt eIdent <|> inbrackets expression 
+    let ct c = EIdent{ Name = c }
+    let pf = ws_ <| eIdent <|> (ctor |>> ct) <|> inbrackets expression 
     let arg0 = attempt (ws_ arg)
     let args = many arg0
     tuple3 pf arg0 args
