@@ -40,6 +40,7 @@ let primary stream =
 
 let rec arg stream =
     choice [primary; attempt eListEmpty; eList; inbrackets expression]
+    <!> "argument"
     <| stream
 
 and eUnary stream = 
@@ -57,11 +58,11 @@ and eBinary stream =
 
     let rec mkbinp bin_ops =
         match bin_ops with
-        | [] -> attempt eFunApp <|> arg
+        | [] -> attempt eFunApp <|> arg <!> "BO arg"
         | b :: bs -> leftAssos (mkbinp bs) b
             
     mkbinp binPrioritised
-    <??> "binary operation"
+    <!> "binary operation"
     <| stream
 
 and eLambda stream =
@@ -88,7 +89,7 @@ and eLambda stream =
 and eFunApp stream =
     let fa f a = EFunApp{ Func = f; Arg = a }
     let ct c = EIdent{ Name = c }
-    let pf = ws_ <| eIdent <|> (ctor |>> ct) <|> inbrackets expression 
+    let pf = (ws_ <| eIdent <|> (ctor |>> ct) <|> inbrackets expression)
     let arg0 = attempt (ws_ arg)
     let args = many arg0
     tuple3 pf arg0 args
@@ -97,19 +98,17 @@ and eFunApp stream =
                                     (fa f <| x) 
                                     xs
                     )
-    <??> "function application"
+    <!> "function application"
     <| stream
 
 and eIfElse stream =
     let p_if = ws_ (pstring "if")                              
     let p_then = ws_ (pstring "then")
-    let p_else = ws_ (pstring "else")
-    let pIfElse =
-        tuple3 (p_if >>. ws_ expression)
-               (p_then >>. ws_ expression)
-               (between p_else pEndKeyword expression)
+    let p_else = ws_ (pstring "else")            
 
-    pIfElse
+    tuple3 (p_if >>. ws_ expression)
+           (p_then >>. ws_ expression)
+           (between p_else pEndKeyword (ws_ expression <!> "if-else ON FALSE"))
     |>> (fun (cond, onTrue, onFalse) -> EIfElse{ Cond = cond; OnTrue = onTrue; OnFalse = onFalse })
     <??> "if-else"
     <| stream
@@ -197,19 +196,19 @@ and eList stream =
 and expression stream = 
     let e = choice [                 
                     attempt eListCons 
-                    attempt eBinary
-                    attempt eIfElse   
-                    attempt eCaseOf   
-                    attempt eLetIn    
-                    attempt eFunApp
+                    attempt eBinary <!> "binary *"
+                    attempt eIfElse <!> "if-else *" 
+                    attempt eCaseOf <!> "case-of *"  
+                    attempt eLetIn  <!> "let-in *"  
+                    attempt eFunApp <!> "func-app *"
                     attempt eListEmpty
                     attempt eLiteral
                     eList
                     eIdent
                     eLambda
                 ]
-    attempt e <|> inbrackets expression 
-    <??> "expression"
+    attempt e <|> inbrackets expression
+    <!> "expression *" 
     <| stream
                                                              
 
@@ -228,7 +227,7 @@ and dValue stream =
     |>> (fun (t, name, value) ->
             DValue{ Type = t; Name = name; Value = value }
         )
-    <?> "value declaration"
+    <??> "value declaration"
     <| stream 
 
 and dFunction stream =
@@ -253,7 +252,7 @@ and dFunction stream =
              let body' = List.foldBack (fun x acc -> ld x acc) (arg0::args) body 
              DFunction{ Type = t; Name = name; Body = body' }
         )       
-    <?> "function declaration"
+    <??> "function declaration"
     <| stream  
 
 and dDatatype stream =    
@@ -277,7 +276,6 @@ and dDatatype stream =
 
 and declaration stream =
     choice [attempt dValue; attempt dFunction; dDatatype]
-    <??> "declaration"
     <| stream
 
 let declarations = 

@@ -11,6 +11,7 @@ let bin2str =
     | BSub -> "-"
     | BDiv -> "/"
     | BMul -> "*"
+    | BMod -> "%"
     // Logic
     | BAnd -> "&&"
     | BOr -> "||"
@@ -41,7 +42,7 @@ and transPattern (p : Pattern) =
             | [] -> ""
             | pp::ps -> 
                 "(" + transPattern pp + 
-                (List.fold (fun acc p -> acc + ", " + transPattern p + "") "" ps) + 
+                (List.fold (fun acc p -> acc + ", " + transPattern p) "" ps) + 
                 ")"
         name + ps 
     | PWildcard -> "_" 
@@ -55,7 +56,7 @@ and transExpr (n : int) (expr : Expression) =
         | EIfElse e -> 
             "if (" + te e.Cond + 
             ") then (" + te e.OnTrue + 
-            ") else (" + te e.OnFalse
+            ") else (" + te e.OnFalse + ")"
         | ELetIn e -> 
             transDecl (n + 1) e.Binding +
             " in " + te e.Body
@@ -66,7 +67,15 @@ and transExpr (n : int) (expr : Expression) =
         | ECaseOf e -> 
             "match " + te e.Matching + " with " + 
              (List.fold (fun acc (p, b) -> acc + "| " + transPattern p + " -> " + te b) "" e.Patterns)
-        | ECtor e -> List.fold (fun acc (i : EIdent) -> acc + " " + i.Name) "" (e.Args)
+        | ECtor e ->
+            let ps = 
+                match e.Args with
+                | [] -> ""
+                | p::ps -> 
+                    "(" + p.Name + 
+                    (List.fold (fun acc (i : EIdent) -> acc + ", " + i.Name) "" ps) + 
+                    ")" 
+            e.DatatypeName + "." + e.CtorName + ps
             
     "(" + res + ")"
 

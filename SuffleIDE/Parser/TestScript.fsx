@@ -26,39 +26,42 @@ open Suffle.Parser
 let run' p = run (p .>> eof)
 
 
-let x = parse """
+//let x = parse """
+//
+//
+//datatype List 'a = 
+//| Cons 'a (List 'a)
+//| Nil
+//end  
+//
+//def fun :: 'a -> (List 'a)
+//mk x = [x]
+//
+//def fun :: (List 'a) -> int
+//len list = 
+//    case list of
+//    | [] -> 0
+//    | _ : rest -> len rest + 1
+//    end
+//
+//def fun :: (List 'a) -> (List 'a)
+//rev xs =
+//    let 
+//        def fun :: (List 'a) -> (List 'a) -> (List 'a)
+//        rev' xs rest = 
+//            case rest of
+//            | [] -> xs
+//            | x : rs -> rev' (x : xs) rs
+//            end
+//    in
+//        rev' [] xs
+//    end
+//
+//def val :: (List int)
+//xs = mk 5     
+//    
+
+//"""  
 
 
-datatype List 'a = 
-| Cons 'a (List 'a)
-| Nil
-end  
-
-def fun :: 'a -> (List 'a)
-mk x = [x]
-
-def fun :: (List 'a) -> int
-len list = 
-    case list of
-    | [] -> 0
-    | _ : rest -> len rest + 1
-    end
-
-def fun :: (List 'a) -> (List 'a)
-rev xs =
-    let 
-        def fun :: (List 'a) -> (List 'a) -> (List 'a)
-        rev' xs rest = 
-            case rest of
-            | [] -> xs
-            | x : rs -> rev' (x : xs) rs
-            end
-    in
-        rev' [] xs
-    end
-
-def val :: (List int)
-xs = mk 5     
-    
-
-"""  
+let y = run' eIfElse "if (a == 0) then b else gcd (b % a) a end"

@@ -616,19 +616,20 @@ type ``Program parsing``() =
                                   Params = ["'a"];
                                   Ctors =
                                    [("Cons", [TVar "'a"; TDatatype ("List",[TVar "'a"])]); ("Nil", [])];};
-                               DFunction
+                               DValue
                                  {Type =
                                    TLambda
                                      (TLambda (TDatatype ("List",[TVar "'a"]),TVar "'a"),
                                       TDatatype ("List",[TVar "'a"]));
                                   Name = {Name = "Cons";};
-                                  Body =
+                                  Value =
                                    ELambda
                                      {Arg = {Name = "arg0";};
                                       Body =
                                        ELambda
                                          {Arg = {Name = "arg1";};
-                                          Body = ECtor {CtorName = "Cons";
+                                          Body = ECtor {DatatypeName = "List";
+                                                        CtorName = "Cons";
                                                         Args = [{Name = "arg0";}; {Name = "arg1";}];};};};};
                                DValue {Type = TDatatype ("List",[TVar "'a"]);
                                        Name = {Name = "Nil";};
