@@ -612,104 +612,105 @@ type ``Program parsing``() =
         let r = run' program
         Assert.True(isSucc (
                              [DDatatype
-                                     {Name = {Name = "List";};
-                                      Params = ["'a"];
-                                      Ctors =
-                                       [("Cons", [TVar "'a"; TDatatype ("List",[TVar "'a"])]); ("Nil", [])];};
-                                   DFunction
-                                     {Type =
-                                       TLambda
-                                         (TLambda (TDatatype ("List",[TVar "'a"]),TVar "'a"),
-                                          TDatatype ("List",[TVar "'a"]));
-                                      Name = {Name = "Cons";};
+                                 {Name = {Name = "List";};
+                                  Params = ["'a"];
+                                  Ctors =
+                                   [("Cons", [TVar "'a"; TDatatype ("List",[TVar "'a"])]); ("Nil", [])];};
+                               DFunction
+                                 {Type =
+                                   TLambda
+                                     (TLambda (TDatatype ("List",[TVar "'a"]),TVar "'a"),
+                                      TDatatype ("List",[TVar "'a"]));
+                                  Name = {Name = "Cons";};
+                                  Body =
+                                   ELambda
+                                     {Arg = {Name = "arg0";};
                                       Body =
                                        ELambda
                                          {Arg = {Name = "arg1";};
-                                          Body =
-                                           ELambda
-                                             {Arg = {Name = "arg0";};
-                                              Body = ECtor {Args = [{Name = "arg0";}; {Name = "arg1";}];};};};};
-                                   DValue {Type = TDatatype ("List",[TVar "'a"]);
-                                           Name = {Name = "Nil";};
-                                           Value = ELiteral {Value = VCtor ("Nil",[]);};};
-                                   DFunction
-                                     {Type = TLambda (TVar "'a",TDatatype ("List",[TVar "'a"]));
-                                      Name = {Name = "mk";};
+                                          Body = ECtor {CtorName = "Cons";
+                                                        Args = [{Name = "arg0";}; {Name = "arg1";}];};};};};
+                               DValue {Type = TDatatype ("List",[TVar "'a"]);
+                                       Name = {Name = "Nil";};
+                                       Value = ELiteral {Value = VCtor ("Nil",[]);};};
+                               DFunction
+                                 {Type = TLambda (TVar "'a",TDatatype ("List",[TVar "'a"]));
+                                  Name = {Name = "mk";};
+                                  Body =
+                                   ELambda
+                                     {Arg = {Name = "x";};
+                                      Body = EFunApp {Func = EFunApp {Func = EIdent {Name = "Cons";};
+                                                                      Arg = EIdent {Name = "x";};};
+                                                      Arg = EIdent {Name = "Nil";};};};};
+                               DFunction
+                                 {Type = TLambda (TDatatype ("List",[TVar "'a"]),TInt);
+                                  Name = {Name = "len";};
+                                  Body =
+                                   ELambda
+                                     {Arg = {Name = "list";};
                                       Body =
-                                       ELambda
-                                         {Arg = {Name = "x";};
-                                          Body = EFunApp {Func = EFunApp {Func = EIdent {Name = "Cons";};
-                                                                          Arg = EIdent {Name = "x";};};
-                                                          Arg = EIdent {Name = "Nil";};};};};
-                                   DFunction
-                                     {Type = TLambda (TDatatype ("List",[TVar "'a"]),TInt);
-                                      Name = {Name = "len";};
+                                       ECaseOf
+                                         {Matching = EIdent {Name = "list";};
+                                          Patterns =
+                                           [(PCtor ("Nil",[]), ELiteral {Value = VInt 0;});
+                                            (PCtor ("Cons",[PWildcard; PIdent {Name = "rest";}]),
+                                             EBinary {Op = BAdd;
+                                                      Arg1 = EFunApp {Func = EIdent {Name = "len";};
+                                                                      Arg = EIdent {Name = "rest";};};
+                                                      Arg2 = ELiteral {Value = VInt 1;};})];};};};
+                               DFunction
+                                 {Type =
+                                   TLambda (TDatatype ("List",[TVar "'a"]),TDatatype ("List",[TVar "'a"]));
+                                  Name = {Name = "rev";};
+                                  Body =
+                                   ELambda
+                                     {Arg = {Name = "xs";};
                                       Body =
-                                       ELambda
-                                         {Arg = {Name = "list";};
-                                          Body =
-                                           ECaseOf
-                                             {Matching = EIdent {Name = "list";};
-                                              Patterns =
-                                               [(PCtor ("Nil",[]), ELiteral {Value = VInt 0;});
-                                                (PCtor ("Cons",[PWildcard; PIdent {Name = "rest";}]),
-                                                 EBinary {Op = BAdd;
-                                                          Arg1 = EFunApp {Func = EIdent {Name = "len";};
-                                                                          Arg = EIdent {Name = "rest";};};
-                                                          Arg2 = ELiteral {Value = VInt 1;};})];};};};
-                                   DFunction
-                                     {Type =
-                                       TLambda (TDatatype ("List",[TVar "'a"]),TDatatype ("List",[TVar "'a"]));
-                                      Name = {Name = "rev";};
-                                      Body =
-                                       ELambda
-                                         {Arg = {Name = "xs";};
-                                          Body =
-                                           ELetIn
-                                             {Binding =
-                                               DFunction
-                                                 {Type =
-                                                   TLambda
-                                                     (TDatatype ("List",[TVar "'a"]),
-                                                      TLambda
-                                                        (TDatatype ("List",[TVar "'a"]),
-                                                         TDatatype ("List",[TVar "'a"])));
-                                                  Name = {Name = "rev'";};
+                                       ELetIn
+                                         {Binding =
+                                           DFunction
+                                             {Type =
+                                               TLambda
+                                                 (TDatatype ("List",[TVar "'a"]),
+                                                  TLambda
+                                                    (TDatatype ("List",[TVar "'a"]),
+                                                     TDatatype ("List",[TVar "'a"])));
+                                              Name = {Name = "rev'";};
+                                              Body =
+                                               ELambda
+                                                 {Arg = {Name = "xs";};
                                                   Body =
                                                    ELambda
-                                                     {Arg = {Name = "xs";};
+                                                     {Arg = {Name = "rest";};
                                                       Body =
-                                                       ELambda
-                                                         {Arg = {Name = "rest";};
-                                                          Body =
-                                                           ECaseOf
-                                                             {Matching = EIdent {Name = "rest";};
-                                                              Patterns =
-                                                               [(PCtor ("Nil",[]), EIdent {Name = "xs";});
-                                                                (PCtor
-                                                                   ("Cons",
-                                                                    [PIdent {Name = "x";};
-                                                                     PIdent {Name = "rs";}]),
+                                                       ECaseOf
+                                                         {Matching = EIdent {Name = "rest";};
+                                                          Patterns =
+                                                           [(PCtor ("Nil",[]), EIdent {Name = "xs";});
+                                                            (PCtor
+                                                               ("Cons",
+                                                                [PIdent {Name = "x";};
+                                                                 PIdent {Name = "rs";}]),
+                                                             EFunApp
+                                                               {Func =
                                                                  EFunApp
-                                                                   {Func =
+                                                                   {Func = EIdent {Name = "rev'";};
+                                                                    Arg =
                                                                      EFunApp
-                                                                       {Func = EIdent {Name = "rev'";};
-                                                                        Arg =
+                                                                       {Func =
                                                                          EFunApp
                                                                            {Func =
-                                                                             EFunApp
-                                                                               {Func =
-                                                                                 EIdent {Name = "Cons";};
-                                                                                Arg = EIdent {Name = "x";};};
-                                                                            Arg = EIdent {Name = "xs";};};};
-                                                                    Arg = EIdent {Name = "rs";};})];};};};};
-                                              Body = EFunApp {Func = EFunApp {Func = EIdent {Name = "rev'";};
-                                                                              Arg = EIdent {Name = "Nil";};};
-                                                              Arg = EIdent {Name = "xs";};};};};};
-                                   DValue {Type = TDatatype ("List",[TInt]);
-                                           Name = {Name = "xs";};
-                                           Value = EFunApp {Func = EIdent {Name = "mk";};
-                                                            Arg = ELiteral {Value = VInt 5;};};}]
+                                                                             EIdent {Name = "Cons";};
+                                                                            Arg = EIdent {Name = "x";};};
+                                                                        Arg = EIdent {Name = "xs";};};};
+                                                                Arg = EIdent {Name = "rs";};})];};};};};
+                                          Body = EFunApp {Func = EFunApp {Func = EIdent {Name = "rev'";};
+                                                                          Arg = EIdent {Name = "Nil";};};
+                                                          Arg = EIdent {Name = "xs";};};};};};
+                               DValue {Type = TDatatype ("List",[TInt]);
+                                       Name = {Name = "xs";};
+                                       Value = EFunApp {Func = EIdent {Name = "mk";};
+                                                        Arg = ELiteral {Value = VInt 5;};};}]
                            ) <| r """
 
 datatype List 'a = 
