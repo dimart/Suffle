@@ -8,20 +8,22 @@ let lineNum = 0
 
 type Interpreter () = 
     /// Current function context representation
-    let vars = new Dictionary<string, Value list>()
+    let vars = new Dictionary<string, Stack<Value>>()
 
     /// Returns current function context
     let getContext () = 
         let mutable toRet = []
         for x in vars do
-            toRet <- (x.Key, List.head x.Value)::toRet
+            toRet <- (x.Key, x.Value.Peek())::toRet
         toRet
 
     /// Renews current context
     let setContext (x: (string * Value) list) = 
         vars.Clear()
         for (key, value) in x do
-            vars.Add (key, (value::[]))
+            let stack = new Stack<Value>()
+            stack.Push value
+            vars.Add (key, stack)
 
     /// Add variable to context
     let addToContext (key, value) = 
@@ -174,6 +176,8 @@ type Interpreter () =
             match clos with
             | VClosure (a, b) -> evalClosure <| VClosure (arg::a, b)
             | _ -> raise (TypeMismatchException ("Closure expected", lineNum))
+        | ECtor x ->
+            let ctor = evalConstr x
         | _ -> raise (TypeMismatchException ("Lambda function excpected", lineNum))
 
 
@@ -181,6 +185,10 @@ type Interpreter () =
     and evalCaseOf (stmnt: ECaseOf) = 
         VInt 5
         //  Currently not implemented
+
+    ///  Evaluate constructor application
+    and evalConstr (stmnt: ECtor) = 
+        VInt 5
 
 
     /// Evaluate expression
