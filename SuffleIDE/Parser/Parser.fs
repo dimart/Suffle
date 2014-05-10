@@ -17,7 +17,7 @@ let dtProcessor (p : Program) =
                       }
         | t::ts ->
             let args = List.init (types.Length) (fun i -> mkId <| "arg" + i.ToString())
-            let body = List.fold (fun acc x -> mkLd x acc) (ECtor{ Args = args }) args
+            let body = List.foldBack (fun x acc -> mkLd x acc) args (ECtor{ CtorName = ctorName; Args = args }) 
             let ftype = List.fold (fun acc x -> TLambda(x, acc)) t ts
             DFunction{ Type = TLambda(ftype, type'); Name = mkId ctorName; Body = body }
                  

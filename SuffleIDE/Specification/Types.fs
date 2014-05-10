@@ -95,6 +95,7 @@ and ECaseOf =
     }
 and ECtor =
     {
+        CtorName : string
         Args : EIdent list
     }
 
