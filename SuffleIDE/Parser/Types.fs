@@ -2,57 +2,56 @@
 
 open FParsec
 open Suffle.Specification.Types
+open Suffle.Specification.Syntax
 open Parser.Auxiliary
 
-let tUnit stream = 
-    pstring "unit" >>% TUnit
-    <??> "unit type"
+let internal tUnit stream = 
+    pstr "unit" >>% TUnit
+    <?> "unit"
     <| stream
 
-let tBool stream = 
-    pstring "bool" >>% TBool
-    <??> "bool type"
+let internal tBool stream = 
+    pstr "bool" >>% TBool
+    <?> "bool"
     <| stream
 
-let tChar stream = 
-    pstring "char" >>% TChar
-    <??> "char type"  
+let internal tChar stream = 
+    pstr "char" >>% TChar
+    <?> "char"  
     <| stream
 
-let tInt  stream = 
-    pstring "int"  >>% TInt
-    <??> "int type" 
+let internal tInt stream = 
+    pstr "int"  >>% TInt
+    <?> "int" 
     <| stream
 
-let tVar stream = 
+let internal tVar stream = 
     pvartype |>> TVar 
-    <??> "variable type"     
+    <?> "variable"     
     <| stream
 
-let rec tDatatype stream =
-    ws_ ctor |>> (fun c -> TDatatype(c, []))
-    <??> "datatype name" 
+let rec internal tDatatype stream =
+    ctor |>> (fun c -> TDatatype(c, []))
+    <?> "datatype name" 
     <| stream
 
-and tDatatypeGeneric s =
-    ws_ ctor .>>. (many1 (ws_ tType)) |>> TDatatype
-    <??> "constructor with arguments"
+and internal tDatatypeGeneric s =
+    ctor .>>. (many1 tType) |>> TDatatype
+    <?> "constructor with arguments"
     <| s
 
-and basicType stream = 
-    ws_ <| choice [tUnit; tBool; tChar; tInt; tVar; tDatatype]
-    <??> "basic type"
+and internal basicType stream = 
+    choice [tUnit; tBool; tChar; tInt; tVar; tDatatype]
     <| stream
 
-and tLambda stream =
-    let left = ws_ (inbrackets tType <|> basicType <|> tDatatype)
-    let arrow = ws_ (pstring "->")
-    let right = ws_ tType
+and internal tLambda stream =
+    let left = inbrackets tType <|> basicType <|> tDatatype
+    let arrow = pstr sArrow
+    let right = tType
     left .>> arrow .>>. right |>> TLambda
-    <??> "lambda type"
+    <?> "lambda"
     <| stream
 
 and tType stream =
     choice [attempt tLambda; inbrackets tType; attempt tDatatypeGeneric; basicType]
-    <??> "type declaration"
     <| stream

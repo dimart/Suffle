@@ -28,25 +28,25 @@ let isFail =
 
 [<TestFixture>]
 type ``Literal parsing``() =
+
+    let r = run' literal
     
     [<Test>]
     member x.``Unit`` () =
-        Assert.True(isSucc VUnit <| run' lUnit "()")
-        Assert.True(isFail <| run' lUnit "(]")
-        Assert.True(isFail <| run' lUnit "[)")
-        Assert.True(isFail <| run' lUnit "(())")
+        Assert.True(isSucc VUnit <| r "()")
+        Assert.True(isFail <| r "(]")
+        Assert.True(isFail <| r "[)")
+        Assert.True(isFail <| r "(())")
 
     [<Test>]
     member x.``Bool`` () =
-        Assert.True(isSucc (VBool true) <| run' lBool "true")
-        Assert.True(isSucc (VBool false) <| run' lBool "false")
-
-        Assert.True(isFail <| run' lBool "True")
-        Assert.True(isFail <| run' lBool "False")
+        Assert.True(isSucc (VBool true) <| r "true")
+        Assert.True(isSucc (VBool false) <| r "false")
+        Assert.True(isFail <| r "True")
+        Assert.True(isFail <| r "False")
 
     [<Test>]
     member x.``Char`` () =
-        let r = run' lChar
         Assert.True(isSucc (VChar 'a') <| r "'a'")
         Assert.True(isSucc (VChar 'x') <| r "'x'")
         Assert.True(isSucc (VChar '7') <| r "'7'")
@@ -61,7 +61,6 @@ type ``Literal parsing``() =
 
     [<Test>]
     member x.``Int`` () =
-        let r = run' lInt
         Assert.True(isSucc (VInt 42) <| r "42")
         Assert.True(isSucc (VInt 42) <| r "+42")
         Assert.True(isSucc (VInt -7) <| r "-7")
@@ -69,53 +68,36 @@ type ``Literal parsing``() =
         Assert.True(isSucc (VInt 0) <| r "00")
         Assert.True(isSucc (VInt 123) <| r "0123")
         Assert.True(isSucc (VInt 0) <| r "-0")
-        
         Assert.True(isFail <| r "3.14")
 
 [<TestFixture>]
 type ``Type parsing``() =
+
+    let r = run' tType
     
     [<Test>]
-    member x.``Unit`` () =
-        Assert.True(isSucc TUnit <| run' tUnit "unit")
+    member x.``Basic types`` () =
+        Assert.True(isSucc TUnit <| r "unit")  
+        Assert.True(isSucc TBool <| r "bool")    
+        Assert.True(isSucc TChar <| r "char")  
+        Assert.True(isSucc TInt <| r "int")
 
     [<Test>]
-    member x.``Bool`` () =
-        Assert.True(isSucc TBool <| run' tBool "bool")
-
-    [<Test>]
-    member x.``Char`` () =
-        Assert.True(isSucc TChar <| run' tChar "char")
-
-    [<Test>]
-    member x.``Int`` () =
-        Assert.True(isSucc TInt <| run' tInt "int")
-
-    [<Test>]
-    member x.``Var`` () =
-        let r = run' tVar
+    member x.``Variable`` () =
         Assert.True(isSucc (TVar "'a") <| r "'a")
         Assert.True(isSucc (TVar "'T") <| r "'T")
         Assert.True(isSucc (TVar "'Type") <| r "'Type")
-        
-        Assert.True(isFail <| r "A")
-        Assert.True(isFail <| r "a")
-        Assert.True(isFail <| r "_type")
 
     [<Test>]
     member x.``Datatype`` () =
-        let r = run' tDatatype
         Assert.True(isSucc (TDatatype ("A", [])) <| r "A")
         Assert.True(isSucc (TDatatype ("Tt", [])) <| r "Tt")
         Assert.True(isSucc (TDatatype ("Option", [])) <| r "Option")
         Assert.True(isSucc (TDatatype ("A1", [])) <| r "A1")
-
-        Assert.True(isFail <| r "A'")
-        Assert.True(isFail <| r "A_B")
         
     [<Test>]
     member x.``Lambda`` () =
-        let r = run' tLambda
+        //let r = run' tLambda
         Assert.True(isSucc (TLambda(TInt, TInt)) <| r "int -> int")
         Assert.True(isSucc (TLambda(TChar, TBool)) <| r "char -> bool")
         Assert.True(isSucc (TLambda(TVar "'a", TVar "'b")) <| r "'a -> 'b")
@@ -138,7 +120,6 @@ type ``Type parsing``() =
                            ) <| r "int -> (char -> bool) -> ('a -> A) -> (int -> int)"
                     )
         
-        Assert.True(isFail <| r "int")
         Assert.True(isFail <| r "int <- int")
         Assert.True(isFail <| r "a -> int")
         Assert.True(isFail <| r "(int -> int")
@@ -147,23 +128,19 @@ type ``Type parsing``() =
 
 [<TestFixture>]
 type ``Pattern parsing``() =
+
+    let r = run' pattern
     
     [<Test>]
     member x.``Identifier`` () =
-        let r = run' pIdent
+        //let r = run' pIdent
         Assert.True(isSucc (PIdent{Name = "function1"}) <| r "function1")
         Assert.True(isSucc (PIdent{Name = "_arg1"}) <| r "_arg1")
         Assert.True(isSucc (PIdent{Name = "g'"}) <| r "g'")
 
-        Assert.True(isFail <| r "1a")
-        Assert.True(isFail <| r "a-b")
-        Assert.True(isFail <| r "'a")
-        Assert.True(isFail <| r "@x")
-        Assert.True(isFail <| r "x@")
-
     [<Test>]
     member x.``Literal`` () =
-        let r = run' pLiteral
+        //let r = run' pLiteral
         Assert.True(isSucc (PLiteral{Value = VUnit}) <| r "()")
         Assert.True(isSucc (PLiteral{Value = VInt 123}) <| r "123")
         Assert.True(isSucc (PLiteral{Value = VInt -42}) <| r "-42")
@@ -175,11 +152,11 @@ type ``Pattern parsing``() =
 
     [<Test>]
     member x.``Wildcard`` () =
-        Assert.True(isSucc PWildcard <| run' pWildcard "_")
+        Assert.True(isSucc PWildcard <| r "_")
 
     [<Test>]
     member x.``Constructor`` () =
-        let r = run' pCtor
+        //let r = run' pCtor
         Assert.True(isSucc (PCtor("A", [PLiteral{Value = VInt 123}; PIdent{Name = "a"}])) <| r "A   123 a")
         Assert.True(isSucc (PCtor("A", [PLiteral{Value = VChar 'x'}])) <| r "A 'x'")
         Assert.True(isSucc (PCtor("A", [PWildcard])) <| r "A _")
@@ -438,7 +415,7 @@ type ``Expression parsing``() =
                                     Binding = DValue{ Type = TInt; Name = mkIdt "x"; Value = mkLit 5 }
                                     Body = EBinary{ Op = BAdd; Arg1 = mkIde "x"; Arg2 = mkLit 1 }
                                 }
-                           ) <| r "let def val :: int; x = 5; in x + 1 end"
+                           ) <| r "let val :: int; x = 5; in x + 1 end"
                    )
         Assert.True(isSucc (
                                 ELetIn
@@ -459,10 +436,10 @@ type ``Expression parsing``() =
                                        Body = EFunApp {Func = EIdent {Name = "f";};
                                                        Arg = EIdent {Name = "x";};};};}
                            ) <| r """let 
-                                        def val :: int
+                                        val :: int
                                         x = 5
 
-                                        def fun :: int -> int
+                                        fun :: int -> int
                                         f x = x + 1
                                      in 
                                         f x
@@ -507,7 +484,7 @@ type ``Declaration parsing``() =
                                     Name = mkIdt "x"
                                     Value = mkLit 5
                                 }
-                           ) <| r "def val :: int; x = 5;")
+                           ) <| r "val :: int; x = 5;")
         Assert.True(isSucc (
                                 DValue{
                                     Type = TInt
@@ -521,7 +498,7 @@ type ``Declaration parsing``() =
                                                 Arg2 = mkLit 2
                                             }
                                 }
-                           ) <| r "def val :: int abc1 = f x * 2")
+                           ) <| r "val :: int abc1 = f x * 2")
     [<Test>]
     member x.``Function`` () =      
         let r = run' dFunction
@@ -533,7 +510,7 @@ type ``Declaration parsing``() =
                                                    Body = EBinary {Op = BAdd;
                                                                    Arg1 = EIdent {Name = "x";};
                                                                    Arg2 = ELiteral {Value = VInt 1;};};};}
-                           ) <| r "def fun :: int -> int f x = x + 1")
+                           ) <| r "fun :: int -> int f x = x + 1")
         Assert.True(isSucc (
                                 DFunction
                                   {Type = TLambda (TInt,TLambda (TInt,TInt));
@@ -544,7 +521,7 @@ type ``Declaration parsing``() =
                                                              Body = EBinary {Op = BAdd;
                                                                              Arg1 = EIdent {Name = "x";};
                                                                              Arg2 = EIdent {Name = "y";};};};};}
-                           ) <| r "def fun :: int -> int -> int f x y = x + y")
+                           ) <| r "fun :: int -> int -> int f x y = x + y")
         Assert.True(isSucc (
                                 DFunction
                                   {Type = TLambda (TInt,TLambda (TInt,TInt));
@@ -555,7 +532,7 @@ type ``Declaration parsing``() =
                                                              Body = EBinary {Op = BAdd;
                                                                              Arg1 = EIdent {Name = "x";};
                                                                              Arg2 = EIdent {Name = "y";};};};};}
-                           ) <| r "def fun :: int -> int -> int f x = \y -> x + y")
+                           ) <| r "fun :: int -> int -> int f x = \y -> x + y")
         Assert.True(isSucc (
                                 DFunction
                                   {Type = TUnit;
@@ -573,7 +550,7 @@ type ``Declaration parsing``() =
                                                 ELambda {Arg = {Name = "d";};
                                                          Body = ELambda {Arg = {Name = "e";};
                                                                          Body = ELiteral {Value = VUnit;};};};};};};}
-                           ) <| r "def fun :: unit f a b c d e = ()")
+                           ) <| r "fun :: unit f a b c d e = ()")
                            
     [<Test>]
     member x.``Datatype`` () =      
@@ -719,20 +696,20 @@ datatype List 'a =
 | Nil
 end  
 
-def fun :: 'a -> (List 'a)
+fun :: 'a -> (List 'a)
 mk x = [x]
 
-def fun :: (List 'a) -> int
+fun :: (List 'a) -> int
 len list = 
     case list of
     | [] -> 0
     | _ : rest -> len rest + 1
     end
 
-def fun :: (List 'a) -> (List 'a)
+fun :: (List 'a) -> (List 'a)
 rev xs =
     let 
-        def fun :: (List 'a) -> (List 'a) -> (List 'a)
+        fun :: (List 'a) -> (List 'a) -> (List 'a)
         rev' xs rest = 
             case rest of
             | [] -> xs
@@ -742,7 +719,7 @@ rev xs =
         rev' [] xs
     end
 
-def val :: (List int)
+val :: (List int)
 xs = mk 5     
     
                            """)                     

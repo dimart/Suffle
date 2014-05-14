@@ -33,6 +33,7 @@ let sWildcard = "_"
 let sValKeyword = "val"
 let sFunKeyword = "fun"
 let sBinding = "="
+let sTypeDefSep = "::"
 
 let sEndKeyword = "end"
 let sLineEnding = ";"

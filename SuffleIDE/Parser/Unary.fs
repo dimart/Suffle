@@ -7,14 +7,14 @@ open Parser.Auxiliary
 
 let uNeg stream = 
     pstring sNeg >>% UNeg
-    <??> "arithmetic negation"
+    <?> "arithmetic negation"
     <| stream
 
 let uNot stream = 
     pstring sNot >>% UNot
-    <??> "logical negation"
+    <?> "logical negation"
     <| stream
 
 let unaries stream = 
-    choice [uNeg; uNot]  
+    choice [uNeg; uNot] 
     <| stream
