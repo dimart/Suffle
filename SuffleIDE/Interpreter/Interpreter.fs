@@ -1,8 +1,12 @@
-﻿module Suffle.Interpreter
+﻿module Suffle.Interpreter.Interpreter
 
 open Suffle.Specification.Types
-open Interpreter.Expression
+open Suffle.Interpreter.Expression
 
-let eval x = 
-    match x with
-    | Expr x -> evalExpr x
+let inter = new Interpreter()
+
+let evalExpression (x: Expression) = 
+    inter.EvaluateExpression x
+
+let evalProgram (prog: Program) =
+    inter.EvaluateProgram prog

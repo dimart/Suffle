@@ -1,8 +1,8 @@
-﻿module Interpreter.Expression
+﻿module Suffle.Interpreter.Expression
 
 open System.Collections.Generic
 open Suffle.Specification.Types
-open Interpreter.ExceptionList
+open Suffle.Interpreter.ExceptionList
 
 let lineNum = 0
 
@@ -33,12 +33,13 @@ type Interpreter () =
             let tmp = new Stack<Value>()
             tmp.Push value
             context.Add (key, tmp)
-        try
-            (context.Item key)
-                .Push value
-        with
-        | :? KeyNotFoundException -> raise (VariableNotFoundException (key, lineNum))
-//        | :? System.ArgumentException -> raise (VariableNotFoundException (key, lineNum))
+        else 
+            try
+                (context.Item key)
+                    .Push value
+            with
+            | :? KeyNotFoundException -> raise (VariableNotFoundException (key, lineNum))
+//            | :? System.ArgumentException -> raise (VariableNotFoundException (key, lineNum))
 
     /// Get variable from context
     let getFromContext name (context: Dictionary<string, Stack<Value>>) = 
@@ -89,8 +90,11 @@ type Interpreter () =
     /// Evaluate closure
     let rec evalClosure (x: Value) (context: Dictionary<string, Stack<Value>>) =
         match x with
-        | VClosure (_, expr) -> 
-            evalExpr expr context
+        | VClosure (_, expr) ->
+            match expr with
+            | ELambda expr ->
+                evalExpr expr.Body context
+            | _ -> evalExpr expr context
         | _ -> raise (TypeMismatchException ("Closure expected", lineNum))
 
     /// Evaluate type expression
@@ -147,13 +151,18 @@ type Interpreter () =
         let evaluated1 = evalExpr stmnt.Arg1 context
         let evaluated2 = evalExpr stmnt.Arg2 context
         match evaluated1 with
-        | VInt x -> match evaluated2 with
-        //  FIXME: Must also evaluate bool statements. Mb need to know argument somewhere from outside (typecheck)
-                    | VInt y -> VInt <| retNumBin stmnt.Op x y
-                    | _ -> raise (TypeMismatchException ("Int expected", lineNum))
-        | VBool x -> match evaluated2 with
-                        | VBool y -> VBool<| retBoolBin stmnt.Op x y
-                        | _ -> raise (TypeMismatchException ("Bool expected", lineNum))
+        | VInt x -> 
+            match evaluated2 with
+                | VInt y -> 
+                    try
+                        VInt <| retNumBin stmnt.Op x y
+                    with
+                    | :? TypeMismatchException -> VBool <| retBoolNumBin stmnt.Op x y
+                | _ -> raise (TypeMismatchException ("Int expected", lineNum))
+        | VBool x -> 
+            match evaluated2 with
+                | VBool y -> VBool<| retBoolBin stmnt.Op x y
+                | _ -> raise (TypeMismatchException ("Bool expected", lineNum))
         | _ -> raise (TypeMismatchException ("Int or Bool expected", lineNum))
 
     /// Evaluate lambda expression
@@ -163,31 +172,15 @@ type Interpreter () =
     /// Evaluate function application
     and evalFunApp (stmnt: EFunApp) (context: Dictionary<string, Stack<Value>>) = 
         let arg = evalExpr stmnt.Arg context
-        match stmnt.Func with
-        //  TODO: Implement declared functions
-        | EIdent id ->
-            match getFromContext id.Name context with
-            | VClosure (cont, ex) as it ->                 
-                match ex with
-                | ELambda x -> 
-                    let closureContext = setClosureContext cont
-                    addToContext (x.Arg.Name, arg) closureContext
-                    evalClosure it closureContext
-                | ECtor x ->
-                //  TODO
-                    VInt 5
-                | _ -> evalExpr ex <| setClosureContext cont
-            | _ -> raise (TypeMismatchException ("Closure exprected", lineNum))
-        | ELambda x -> 
-            let closure = evalLambda x context
-            let currentContext = setClosureContext <| getContext context
-            addToContext (x.Arg.Name, arg) currentContext
-            evalClosure closure currentContext
-        | ECtor x ->
-            let ctor = evalConstr x context
-            ctor
-        | _ -> raise (TypeMismatchException ("Lambda function excpected", lineNum))
-
+        let func = evalExpr stmnt.Func context
+        match func with
+        | VClosure (cont, ex) as it ->
+            let closureContext = setClosureContext cont
+            match ex with
+            | ELambda x -> addToContext (x.Arg.Name, arg) closureContext
+            | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
+            evalClosure it closureContext
+        | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
 
     /// Evaluate 'case ... of ...' expression
     and evalCaseOf (stmnt: ECaseOf) (context: Dictionary<string, Stack<Value>>) = 
@@ -212,4 +205,31 @@ type Interpreter () =
         | ELambda x -> evalLambda x context
         | EFunApp x -> evalFunApp x context
         | ECaseOf x -> evalCaseOf x context
-        | _ -> failwith "Not Implemented Pattern"
+        | ECtor x -> evalConstr x context
+
+    let evalDecl decl = 
+        match decl with
+        | DValue x ->
+            let variable = evalExpr x.Value vars
+            let name = x.Name.Name
+            addToContext (name, variable) vars
+            printfn "var %A: %A" name variable 
+        | DFunction x ->
+            let variable = evalExpr x.Body vars
+            let name = x.Name.Name
+            addToContext (name, variable) vars
+            printfn "var %A: %A" name variable 
+        | DDatatype x ->
+//            for (name, types) in x.Ctors do
+            ()
+                
+
+    let evalProgram (prog: Program) = 
+        for decl in prog do
+            evalDecl decl
+
+    member this.EvaluateExpression (expr: Expression) = 
+        evalExpr expr vars
+
+    member this.EvaluateProgram (prog: Program) = 
+        evalProgram prog

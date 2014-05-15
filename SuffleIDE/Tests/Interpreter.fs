@@ -1,22 +1,19 @@
-﻿module Tests.Interpreter
+﻿module Suffle.Tests.Interpreter
 
 open NUnit.Framework
 open Suffle.Specification.Types
-open Suffle.Interpreter
-open Suffle.Interpreter
-
-//  Expr (EBinary {Op = BAdd; Arg1 = ELiteral {Value = VInt 5}; Arg2 = ELiteral {Value = VInt 7}})
+open Suffle.Interpreter.ExceptionList
+open Suffle.Interpreter.Interpreter
 
 [<TestFixture>]
-type ``Atomic evaluations`` = 
-    
+type ``Atomic evaluations``() = 
     [<Test>]
     member this.Literals () = 
-        Assert.True <| (VUnit = (eval <| Expr (ELiteral {Value = VUnit})))
-        Assert.True (VBool true = (eval <| Expr (ELiteral {Value = VBool true})))
-        Assert.True (VInt 5 = (eval <| Expr (ELiteral {Value = VInt 5})))
-        Assert.True (VChar 'c' = (eval <| Expr (ELiteral {Value = VChar 'c'})))
-        Assert.False (VInt 7 = (eval <| Expr (ELiteral {Value = VInt 5})))
+        Assert.True <| (VUnit = (eval (ELiteral {Value = VUnit})))
+        Assert.True (VBool true = (eval (ELiteral {Value = VBool true})))
+        Assert.True (VInt 5 = (eval (ELiteral {Value = VInt 5})))
+        Assert.True (VChar 'c' = (eval (ELiteral {Value = VChar 'c'})))
+        Assert.False (VInt 7 = (eval (ELiteral {Value = VInt 5})))
 
     [<Test>]
     member this.``If-else statements`` () = 
@@ -25,7 +22,7 @@ type ``Atomic evaluations`` =
     *)
         Assert.True <| 
             (VInt 3 = (
-                eval <| Expr (
+                eval (
                     EIfElse {
                         Cond = ELiteral {
                             Value = VBool true
@@ -45,7 +42,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             VInt 5 = (
-                eval <| Expr (
+                eval (
                     EIfElse {
                         Cond = EIfElse {
                             Cond = ELiteral {
@@ -73,7 +70,7 @@ type ``Atomic evaluations`` =
             if true then () else 5
         *)
         try 
-            eval <| Expr (
+            eval (
                 EIfElse {
                     Cond = ELiteral {
                         Value = VBool true
@@ -85,10 +82,12 @@ type ``Atomic evaluations`` =
                         Value = VInt 5
                     }
                 }
-            )
+            ) |> ignore
+            ()
         with
-        | TypeMismatchException x -> Assert.Equals x "Expected unit in \'else\' evaluation"
+        | TypeMismatchException (x, _) -> Assert.True <| x.Equals "Expected unit in \'else\' evaluation"
 
+    [<Test>]
     member this.``Let in statements`` () = 
 
         (*
@@ -96,7 +95,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VInt 2) = ( 
-                eval <| Expr (
+                eval (
                     ELetIn {
                         Binding = DValue {
                             Type = TInt
@@ -118,7 +117,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VInt 5) = (
-                eval <| Expr (
+                eval (
                     ELetIn {
                         Binding = DValue {
                             Type = TInt
@@ -133,14 +132,15 @@ type ``Atomic evaluations`` =
             )
         )
 
-    member this.``Unary operators`` = 
+    [<Test>]
+    member this.``Unary operators``() = 
 
         (*
             -5
         *)
         Assert.True (
             (VInt -5) = (
-                eval <| Expr (
+                eval (
                     EUnary {
                         Op = UNeg
                         Arg = ELiteral { Value = VInt 5 }
@@ -154,7 +154,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VInt 3) = (
-                eval <| Expr (
+                eval (
                     EUnary {
                         Op = UNeg
                         Arg = EUnary {
@@ -171,7 +171,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool false) = (
-                eval <| Expr (
+                eval (
                     EUnary {
                         Op = UNot
                         Arg = ELiteral { Value = VBool true }
@@ -180,6 +180,7 @@ type ``Atomic evaluations`` =
             )
         )
 
+    [<Test>]
     member this.``Binary Arithmetic Operators`` () = 
         
         (*
@@ -187,7 +188,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VInt 8) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BAdd
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -202,7 +203,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VInt 2) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BSub
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -217,7 +218,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VInt 4) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BDiv
                         Arg1 = ELiteral { Value = VInt 8 }
@@ -232,9 +233,9 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VInt 35) = (
-                eval <| Expr (
+                eval (
                     EBinary {
-                        Op = BDiv
+                        Op = BMul
                         Arg1 = ELiteral { Value = VInt 7 }
                         Arg2 = ELiteral { Value = VInt 5 }
                     }
@@ -242,6 +243,7 @@ type ``Atomic evaluations`` =
             )
         )
 
+    [<Test>]
     member this.``Binary Logical Operators`` () = 
 
         (*
@@ -249,7 +251,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool false) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BAnd
                         Arg1 = ELiteral { Value = VBool true }
@@ -264,7 +266,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool true) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BAnd
                         Arg1 = ELiteral { Value = VBool true }
@@ -279,7 +281,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool true) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BOr
                         Arg1 = ELiteral { Value = VBool false }
@@ -294,7 +296,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool false) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BOr
                         Arg1 = ELiteral { Value = VBool false }
@@ -304,6 +306,7 @@ type ``Atomic evaluations`` =
             )
         )
 
+    [<Test>]
     member this.``Binary Comparison Expressions`` () = 
                 
         (*
@@ -311,7 +314,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool false) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BEQ
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -326,7 +329,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool true) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BNEQ
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -341,7 +344,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool true) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BGT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -356,7 +359,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool false) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BLT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -371,7 +374,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool false) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BNGT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -386,7 +389,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool true) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BNLT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -401,7 +404,7 @@ type ``Atomic evaluations`` =
         *)
         Assert.True (
             (VBool true) = (
-                eval <| Expr (
+                eval (
                     EBinary {
                         Op = BNLT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -411,3 +414,21 @@ type ``Atomic evaluations`` =
             )
         )
 
+    [<Test>]
+    member this.``Lambda evaluation``() = 
+    (*
+        (\x -> x)
+    *)
+        Assert.True (
+            VClosure ([], ELambda {
+                Arg = { EIdent.Name = "x" }
+                Body = EIdent { Name = "x" }
+            }) = (
+                eval (
+                    ELambda {
+                        Arg = { EIdent.Name = "x" }
+                        Body = EIdent { Name = "x" }
+                    }
+                )
+            )
+        )
