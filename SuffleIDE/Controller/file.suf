@@ -1,0 +1,26 @@
+fun :: 'a -> 'a
+id x = x
+
+val :: int
+x = (if true then id else id end) 5
+
+datatype Paired 'a = 
+| Pair 'a 'a
+end
+
+datatype List 'a = 
+| Cons 'a (List 'a)
+| Nil
+end 
+
+val :: (List (Paired int))
+ribs = [Pair 1 2, Pair 2 3]
+
+val :: List int
+leafs = [1, 2, 3, 4]
+
+fun :: (List (Paired int)) -> (List int) -> (List bool)
+dfs list 
+
+val :: List bool
+x = dfs ribs leafs

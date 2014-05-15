@@ -3,7 +3,9 @@
 #Interpreter.sln
 #Interpreter/
 */Backup/*
-*/UpdateLog.htm
+*/UpdateLog*.htm
 */*/bin/
 */*/obj/
 *.suo
+SuffleIDE/packages/*
+SuffleIDE/UpgradeLog*

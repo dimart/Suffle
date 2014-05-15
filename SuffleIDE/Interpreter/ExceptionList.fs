@@ -1,4 +1,4 @@
-﻿module Interpreter.ExceptionList
+﻿module Suffle.Interpreter.ExceptionList
 
 //  List of exceptions.
 //  Exception consists of err message and line number
