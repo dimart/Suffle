@@ -22,7 +22,7 @@ and Value =
 | VBool of bool
 | VChar of char
 | VInt of int
-| VCtor of string * Value list
+| VCtor of string * (Value list)  // ctor name and its arguments
 | VClosure of Context * Expression
 
 // *** AST ***
