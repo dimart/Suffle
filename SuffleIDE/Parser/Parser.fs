@@ -8,6 +8,7 @@ let dtProcessor (p : Program) =
     let mkId name = { EIdent.Name = name }    
     let mkLd x b = ELambda{ Arg = x; Body = b }
     let mkDecl (type' : Type) (ctr : Ctor) =
+        let dtn = match type' with | TDatatype (name, _) -> name | _ -> ""
         let (ctorName, types) = ctr
         match types with
         | [] -> DValue{ 
@@ -17,9 +18,12 @@ let dtProcessor (p : Program) =
                       }
         | t::ts ->
             let args = List.init (types.Length) (fun i -> mkId <| "arg" + i.ToString())
-            let body = List.foldBack (fun x acc -> mkLd x acc) args (ECtor{ CtorName = ctorName; Args = args }) 
+            let body = 
+                List.foldBack (fun x acc -> mkLd x acc) 
+                              args 
+                              (ECtor{ DatatypeName = dtn; CtorName = ctorName; Args = args }) 
             let ftype = List.fold (fun acc x -> TLambda(x, acc)) t ts
-            DFunction{ Type = TLambda(ftype, type'); Name = mkId ctorName; Body = body }
+            DValue{ Type = TLambda(ftype, type'); Name = mkId ctorName; Value = body }
                  
     let rec proc (p : Program) : Program =
         match p with 

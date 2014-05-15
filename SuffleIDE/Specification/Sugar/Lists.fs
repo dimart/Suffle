@@ -1,4 +1,4 @@
-﻿module Specification.Sugar.Lists
+﻿module Suffle.Specification.Sugar.Lists
 
 let consOp = ":"
 let openBracket = "["

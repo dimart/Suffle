@@ -5,27 +5,26 @@ open Suffle.Specification.Types
 open Suffle.Specification.Syntax
 open Parser.Auxiliary
 
-let lUnit stream = 
-    pstring sUnit >>% VUnit
-    <??> "unit literal - ()" 
+let internal lUnit stream = 
+    pstr sUnit >>% VUnit
+    <?> "unit literal - ()" 
     <| stream 
 
-let lBool stream = 
-    (pstring sTrue >>% VBool true) <|> (pstring sFalse >>% VBool false)
-    <??> "true or false"
+let internal lBool stream = 
+    (pstr sTrue >>% VBool true) <|> (pstr sFalse >>% VBool false)
+    <?> "true or false"
     <| stream
 
-let lChar stream = 
+let internal lChar stream = 
     between pquote pquote anyChar |>> VChar
-    <??> "char literal"
+    <?> "char literal"
     <| stream
 
-let lInt stream = 
-    pint32 |>> VInt
-    <??> "int"
+let internal lInt stream = 
+    ws_ pint32 |>> VInt
+    <?> "int"
     <| stream
 
-let literals stream = 
+let literal stream = 
     choice [lUnit; lBool; lChar; lInt]
-    <??> "literals"
     <| stream

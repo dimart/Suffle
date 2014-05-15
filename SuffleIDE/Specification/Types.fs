@@ -95,6 +95,7 @@ and ECaseOf =
     }
 and ECtor =
     {
+        DatatypeName : string
         CtorName : string
         Args : EIdent list
     }
@@ -126,6 +127,7 @@ and BinaryOp =
 | BSub
 | BDiv
 | BMul
+| BMod
 // Logic
 | BAnd
 | BOr

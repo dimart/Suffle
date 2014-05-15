@@ -23,6 +23,9 @@ let bMul stream =
     pstring sMul >>% BMul   
     <| stream
 
+let bMod stream = 
+    pstring sMod >>% BMod   
+    <| stream
 
 // Logic
 let bAnd stream = 
@@ -60,7 +63,7 @@ let bNLT stream =
     <| stream 
 
 let binaries stream = 
-    choice [bAdd; bSub; bDiv; bMul; 
+    choice [bAdd; bSub; bDiv; bMul; bMod;
             bAnd; bOr; 
             bEQ; bNEQ; attempt bNGT; attempt bNLT; bGT; bLT]
 
@@ -71,6 +74,7 @@ let binOp2Parser b =
     | BSub -> bSub
     | BDiv -> bDiv
     | BMul -> bMul
+    | BMod -> bMod
     // Logic
     | BAnd -> bAnd
     | BOr  -> bOr

@@ -23,8 +23,8 @@ let (>|>>) phead ptail =
 
 let alphas = ['a'..'z'] @ ['A'..'Z']
 let digits = ['0'..'9']
-let pAlpha s = anyOf alphas <??> "alphabet letter" <| s
-let pIdentSymbols s = anyOf (alphas @ ['_'; '\''] @ digits) <??> "ident symbols (letter, digit, '_' or ')" <| s 
+let pAlpha s = anyOf alphas <| s
+let pIdentSymbols s = anyOf (alphas @ ['_'; '\''] @ digits) <| s 
 
 let pquote stream = pchar '\'' <| stream
 
@@ -35,23 +35,26 @@ let _ws_ p = ws >>? p .>>? ws
 let ws1 = spaces1
 let _ws1 p = ws1 >>? p
 let ws1_ p = p .>>? ws1
-let _ws1_ p = ws1 >>? p .>>? ws1
+let _ws1_ p = ws1 >>? p .>>? ws1       
+  
+let pstr s = ws_ (pstring s)
     
 let ident stream =
-    let head = pchar '_' <|> (anyOf ['a'..'z'])
-    let tail = many pIdentSymbols
-    head >|>> tail |>> chars2str
-    <??> "identifier" 
+    let unders = many (pchar '_') |>> chars2str
+    let p = 
+        unders .>>. anyOf ['a'..'z'] .>>. many pIdentSymbols
+        |>> (fun ((us, c), cs) -> us + chars2str (c::cs))
+    ws_ p
     <| stream
 
 let ctor stream = 
-    upper .>>. many (anyOf (alphas @ digits)) |>> (fun (c, cs) -> chars2str <| c::cs)
-    <??> "constructor name"
+    let p = upper .>>. many (anyOf (alphas @ digits)) |>> (fun (c, cs) -> chars2str <| c::cs)
+    ws_ p
     <| stream
                                                  
 let pvartype stream = 
-    pquote >|>> many1 pAlpha |>> chars2str
-    <??> "variable type name"
+    let p = pquote >|>> many1 pAlpha |>> chars2str
+    ws_ p
     <| stream
                   
-let inbrackets p = between (ws_ (pchar '(' <??> "open bracket")) (ws_ (pchar ')' <??> "close bracket")) (ws_ p)
+let inbrackets p = between (ws_ (pchar '(')) (ws_ (pchar ')')) p

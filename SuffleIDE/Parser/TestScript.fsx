@@ -5,7 +5,7 @@
 
 open FParsec
 open Suffle.Specification.Syntax  
-open Suffle.Specification.Types
+open Suffle.Specification.Types     
 
 #load "Auxiliary.fs"
 #load "Literals.fs"          
@@ -26,39 +26,4 @@ open Suffle.Parser
 let run' p = run (p .>> eof)
 
 
-let x = parse """
-
-
-datatype List 'a = 
-| Cons 'a (List 'a)
-| Nil
-end  
-
-def fun :: 'a -> (List 'a)
-mk x = [x]
-
-def fun :: (List 'a) -> int
-len list = 
-    case list of
-    | [] -> 0
-    | _ : rest -> len rest + 1
-    end
-
-def fun :: (List 'a) -> (List 'a)
-rev xs =
-    let 
-        def fun :: (List 'a) -> (List 'a) -> (List 'a)
-        rev' xs rest = 
-            case rest of
-            | [] -> xs
-            | x : rs -> rev' (x : xs) rs
-            end
-    in
-        rev' [] xs
-    end
-
-def val :: (List int)
-xs = mk 5     
-    
-
-"""  
+let t1 = run' pattern """()"""
