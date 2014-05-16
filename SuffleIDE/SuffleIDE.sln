@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Parser", "Parser\Parser.fsproj", "{7BCC2B87-D58D-44C5-8F7C-0C6AA6CB656B}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Specification", "Specification\Specification.fsproj", "{1164D861-9F51-4F37-9DF6-3A5FECD5DA5D}"
@@ -8,7 +10,6 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Interpreter", "Interpreter\Interpreter.fsproj", "{19FF518A-BF43-419A-89C1-E0AF5F10B954}"
 	ProjectSection(ProjectDependencies) = postProject
 		{1164D861-9F51-4F37-9DF6-3A5FECD5DA5D} = {1164D861-9F51-4F37-9DF6-3A5FECD5DA5D}
-		{7BCC2B87-D58D-44C5-8F7C-0C6AA6CB656B} = {7BCC2B87-D58D-44C5-8F7C-0C6AA6CB656B}
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TypeChecker", "TypeChecker\TypeChecker.fsproj", "{10C0E4C3-7134-48CA-9CA8-D226D9F32CAD}"
@@ -16,6 +17,12 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{4FCF402F-C38D-4F14-906D-34615959CA05}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "s2fs", "s2fs\s2fs.fsproj", "{8AEA3269-F83E-4FD3-A1CB-0F76E879E6B2}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Controller", "Controller\Controller.fsproj", "{ADE13E21-0612-4E63-8565-777C986C9E7B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7BCC2B87-D58D-44C5-8F7C-0C6AA6CB656B} = {7BCC2B87-D58D-44C5-8F7C-0C6AA6CB656B}
+		{19FF518A-BF43-419A-89C1-E0AF5F10B954} = {19FF518A-BF43-419A-89C1-E0AF5F10B954}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +54,10 @@ Global
 		{8AEA3269-F83E-4FD3-A1CB-0F76E879E6B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8AEA3269-F83E-4FD3-A1CB-0F76E879E6B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8AEA3269-F83E-4FD3-A1CB-0F76E879E6B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADE13E21-0612-4E63-8565-777C986C9E7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADE13E21-0612-4E63-8565-777C986C9E7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADE13E21-0612-4E63-8565-777C986C9E7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADE13E21-0612-4E63-8565-777C986C9E7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
