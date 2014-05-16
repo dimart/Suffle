@@ -176,17 +176,55 @@ type Interpreter () =
         match func with
         | VClosure (cont, ex) as it ->
             let closureContext = setClosureContext cont
-            match ex with
-            | ELambda x -> addToContext (x.Arg.Name, arg) closureContext
-            | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
-            evalClosure it closureContext
+            let argName = 
+                match ex with
+                | ELambda x -> x.Arg.Name
+                | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
+            addToContext (argName, arg) closureContext
+            match stmnt.Func with
+            | EIdent x -> 
+                addToContext (x.Name, it) closureContext
+            | _ -> 
+                ()
+            let toRet = evalClosure it closureContext
+//            removeFromContext argName context
+            toRet
         | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
 
     /// Evaluate 'case ... of ...' expression
     and evalCaseOf (stmnt: ECaseOf) (context: Dictionary<string, Stack<Value>>) = 
         let matchable = evalExpr stmnt.Matching context
-        //  Currently not implemented
-
+        let mutable toRet = VUnit
+        let mutable finish = false
+        let names = new List<string>()
+        let matchPattern pattern =
+            names.Clear()
+            let rec tryMatch (value, pattern) =
+                match pattern with
+                | PIdent x ->
+                    addToContext (x.Name, value) context
+                    names.Add x.Name
+                    true
+                | PLiteral x ->
+                    value = x.Value
+                | PCtor (namePat, patterns) ->
+                    match value with
+                    | VCtor (name, values) when name = namePat ->
+                        let pairs = List.zip values patterns
+                        List.fold (fun acc x -> x && acc) true [for pairs in pairs -> tryMatch pairs]
+                    | _ -> false
+                | PWildcard ->
+                    true
+            tryMatch (matchable, pattern)
+        for (pattern, expression) in stmnt.Patterns do
+            if not finish then
+                if matchPattern pattern then
+                    toRet <- evalExpr expression context
+                    for id in names do
+                        removeFromContext id context
+                    finish <- true
+            else ()
+        toRet
 
     ///  Evaluate constructor application
     and evalConstr (stmnt: ECtor) (context: Dictionary<string, Stack<Value>>) = 
