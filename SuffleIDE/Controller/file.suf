@@ -34,26 +34,44 @@ _insert list n =
     | _ -> [n]
     end
 
+fun :: (List 'a) -> (List 'a) -> (List 'a)
+merge a b = 
+    case a of
+    | x:xs -> 
+        if isn b x 
+        then merge xs b
+        else x:(merge xs b)
+        end
+    | [] -> b
+    end
         
-fun :: (List (Paired int)) -> (List int) -> int -> (List bool)
+fun :: (List (Paired int)) -> int -> (List int)
 dfs ribs n =
     let
-        fun :: (List (Paired int)) -> int -> (List bool) -> (List bool)
-        dfs' ribs n vis =
+        fun :: (List (Paired int)) -> int -> (List int) -> (List int)
+        dfs' ribs' n vis =
             if isn vis n then vis
             else
-                case ribs of
-                | [] -> vis
-                | (Pair x y):xs -> 
-                    if x == n then 
-                        let 
-                            val :: List int
-                            visible = n:(dfs' ribs leafs n) 
-                        in
-                            dfs' ribs y visible
+                case ribs' of
+                | [] -> n:vis
+                | x:xs ->
+                    case x of
+                    | Pair x y ->
+                        if x == n then 
+                            let 
+                                val :: List int
+                                visible = n:vis
+                            in
+                                let 
+                                    val :: List int
+                                    curr = dfs' ribs y visible
+                                in
+                                    merge (dfs' xs n vis) curr
+                                end
+                            end
+                        else 
+                            dfs' xs n vis
                         end
-                    else 
-                        dfs' xs n vis
                     end
                 end
             end
@@ -62,10 +80,10 @@ dfs ribs n =
     end
 
 val :: (List (Paired int))
-ribs = [Pair 1 2, Pair 2 3]
+ribs = [Pair 1 2, Pair 2 3, Pair 1 5]
 
 val :: List int
 leafs = [1, 2, 3, 4]
 
-val :: List bool
+val :: List int
 x = dfs ribs 1
