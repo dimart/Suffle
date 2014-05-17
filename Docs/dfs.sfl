@@ -1,0 +1,89 @@
+datatype Paired 'a = 
+| Pair 'a 'a
+end
+
+datatype List 'a = 
+| Cons 'a (List 'a)
+| Nil
+end 
+
+fun :: (List 'a) -> 'a -> bool
+isn list n = 
+    case list of 
+    | x : xs -> if x == n then true else isn xs n end
+    | _ -> false
+    end
+    
+fun :: (List 'a) -> (List 'a)
+rev xs =
+    let 
+        fun :: (List 'a) -> (List 'a) -> (List 'a)
+        rev' xs rest = 
+            case rest of
+            | [] -> xs
+            | x : rs -> rev' (x : xs) rs
+            end
+    in
+        rev' [] xs
+    end
+
+fun :: (List 'a) -> 'a -> (List 'a)
+_insert list n = 
+    case list of
+    | x : xs -> if x == n then x:xs else x:(_insert xs n) end
+    | _ -> [n]
+    end
+
+fun :: (List 'a) -> (List 'a) -> (List 'a)
+merge a b = 
+    case a of
+    | x:xs -> 
+        if isn b x 
+        then merge xs b
+        else x:(merge xs b)
+        end
+    | [] -> b
+    end
+        
+fun :: (List (Paired int)) -> int -> (List int)
+dfs ribs n =
+    let
+        fun :: (List (Paired int)) -> int -> (List int) -> (List int)
+        dfs' ribs' n vis =
+            if isn vis n then vis
+            else
+                case ribs' of
+                | [] -> n:vis
+                | x:xs ->
+                    case x of
+                    | Pair x y ->
+                        if x == n then 
+                            let 
+                                val :: List int
+                                visible = n:vis
+                            in
+                                let 
+                                    val :: List int
+                                    curr = dfs' ribs y visible
+                                in
+                                    merge (dfs' xs n vis) curr
+                                end
+                            end
+                        else 
+                            dfs' xs n vis
+                        end
+                    end
+                end
+            end
+    in 
+        dfs' ribs n []
+    end
+
+val :: (List (Paired int))
+ribs = [Pair 1 2, Pair 2 3, Pair 1 5]
+
+val :: List int
+leafs = [1, 2, 3, 4]
+
+val :: List int
+x = dfs ribs 1

@@ -126,7 +126,7 @@ type Interpreter () =
             let toRet = evalExpr stmnt.Body context
             removeFromContext x.Name.Name context
             toRet
-        //  Maybe need to pass closure or lambda - dunno now, check on it later
+
         | DFunction x -> 
             addToContext (x.Name.Name, (evalExpr x.Body context)) context
             let toRet = evalExpr stmnt.Body context
