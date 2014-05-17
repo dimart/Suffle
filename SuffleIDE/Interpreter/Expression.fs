@@ -9,7 +9,6 @@ let lineNum = 0
 type Interpreter () = 
     /// Current function context representation
     let vars = new Dictionary<string, Stack<Value>> ()
-    let closure = new Dictionary<string, Stack<Value>> ()
 
     /// Returns given context as list
     let getContext (context: Dictionary<string, Stack<Value>>) = 
@@ -20,7 +19,7 @@ type Interpreter () =
 
     /// Sets closure context
     let setClosureContext (x: (string * Value) list) = 
-        closure.Clear()
+        let closure = new Dictionary<string, Stack<Value>> ()
         for (key, value) in x do
             let stack = new Stack<Value>()
             stack.Push value
