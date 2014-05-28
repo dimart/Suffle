@@ -9,6 +9,9 @@ let lineNum = 0
 type Interpreter () = 
     /// Current function context representation
     let vars = new Dictionary<string, Stack<Value>> ()
+    
+    /// Declarations in current program
+    let decls = new Dictionary<Declaration, Value> ()
 
     /// Returns given context as list
     let getContext (context: Dictionary<string, Stack<Value>>) = 
@@ -249,23 +252,69 @@ type Interpreter () =
             let variable = evalExpr x.Value vars
             let name = x.Name.Name
             addToContext (name, variable) vars
-            printfn "var %A: %A" name variable 
+            decls.Add (decl, variable)
         | DFunction x ->
             let variable = evalExpr x.Body vars
             let name = x.Name.Name
             addToContext (name, variable) vars
-            printfn "var %A: %A" name variable 
+            decls.Add (decl, variable)
         | DDatatype x ->
 //            for (name, types) in x.Ctors do
             ()
                 
 
     let evalProgram (prog: Program) = 
-        for decl in prog do
-            evalDecl decl
+        for item in prog do
+            evalDecl item
+
+    let rec printType (typo: Type) = 
+        match typo with
+        | TUnit -> "unit"
+        | TBool -> "bool"
+        | TChar -> "char"
+        | TInt -> "int"
+        | TLambda (arg, body) -> sprintf "%s -> %s" (printType arg) (printType body)
+        | TDatatype (name, types) -> 
+            sprintf "%s:%s" name 
+            <| List.reduce (fun l r -> sprintf " %s ->%s" l r) (List.map (printType) types)
+        | TVar x -> x
 
     member this.EvaluateExpression (expr: Expression) = 
         evalExpr expr vars
 
     member this.EvaluateProgram (prog: Program) = 
         evalProgram prog
+        this.Print()
+
+    member this.Print () = 
+        let mutable toRet = ""
+        for pair in decls do
+            let s = 
+                match pair.Key with
+                | DFunction x -> x.Name.Name
+                | DValue x -> x.Name.Name
+                | DDatatype x -> ""
+            let t = 
+                match pair.Key with
+                | DFunction x -> printType x.Type
+                | DValue x -> printType x.Type
+                | DDatatype x -> List.reduce (fun h x -> sprintf "%s -> %s" h x) x.Params
+            let y =
+                let rec print' x = 
+                    match x with
+                    | VInt x -> x.ToString()
+                    | VUnit _ -> "()"
+                    | VBool x -> x.ToString()
+                    | VChar x -> x.ToString()
+                    | VCtor (a, b) ->
+                        if b = [] then 
+                            ""
+                        else
+                            sprintf "%s: (%s)" a 
+                            <| List.reduce (fun l r -> sprintf "%s; %s" l r) (List.map print' b)
+                    | VClosure _ -> ""
+                print' pair.Value
+            match pair.Value with
+            | VClosure _ -> toRet <- sprintf "%sfun %s: %A\n" toRet s t
+            | _ -> toRet <- sprintf "%svar %s = %A\n" toRet s y
+        toRet
