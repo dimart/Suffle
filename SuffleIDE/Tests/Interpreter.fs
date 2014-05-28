@@ -415,15 +415,14 @@ type ``Atomic evaluations``() =
         )
 
     [<Test>]
-    member this.``Lambda evaluation and function application``() = 
+    member this.``Lambda evaluation``() = 
     (*
         (\x -> x)
     *)
         Assert.True (
-            VClosure ([], ELambda {
-                Arg = { EIdent.Name = "x" }
-                Body = EIdent { Name = "x" }
-            }) = (
+              VClosure ([],ELambda {Arg = {Name = "x";};
+                        Body = EIdent {Name = "x";};})
+                = (
                 evalExpression (
                     ELambda {
                         Arg = { EIdent.Name = "x" }
@@ -435,7 +434,7 @@ type ``Atomic evaluations``() =
 
     (*
         (\x -> 5) 3
-    
+    *)
         Assert.True (
             (VInt 5) = (
                     evalExpression (
@@ -448,7 +447,7 @@ type ``Atomic evaluations``() =
                         }
                     )
                 )
-            )*)
+            )
             
     [<Test>]
     member this.``Case .. of .. evaluation``() = 

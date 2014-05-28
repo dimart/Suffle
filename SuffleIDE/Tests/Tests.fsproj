@@ -55,6 +55,7 @@
     <None Include="Script.fsx" />
     <Compile Include="Interpreter.fs" />
     <None Include="app.config" />
+    <Compile Include="Bugs.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Parser\Parser.fsproj">
