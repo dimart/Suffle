@@ -58,7 +58,7 @@ and internal pList stream =
 
 and pattern s =
     let p = choice [attempt pListEmpty; attempt pListCons; attempt pList; basicpp; pCtor]
-    attempt (inbrackets pattern) <|> p
+    attempt p <|> inbrackets pattern
     <| s
 
 

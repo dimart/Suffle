@@ -14,7 +14,7 @@ open Suffle.Specification.Libs
 open Suffle.Specification.Sugar
 
 let internal _eident stream =      
-    let pkw = choice <| List.map (pstring >> attempt) keywords
+    let pkw = (choice <| List.map (pstring >> attempt) keywords) .>>? notFollowedBy pIdentSymbols
     let pid = ident |>> (fun name -> { EIdent.Name = name })
     (attempt pkw >>. fail "Keyword cannot be an identifier") <|> pid
     <| stream

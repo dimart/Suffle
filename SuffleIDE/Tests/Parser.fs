@@ -504,6 +504,13 @@ type ``Declaration parsing``() =
         let r = run' dFunction
         Assert.True(isSucc (
                                 DFunction
+                                  {Type = TUnit;
+                                   Name = {Name = "function";};
+                                   Body = ELambda {Arg = {Name = "x";};
+                                                   Body = ELiteral { Value = VUnit } ;};}
+                           ) <| r "fun :: unit function x = ()")
+        Assert.True(isSucc (
+                                DFunction
                                   {Type = TLambda (TInt,TInt);
                                    Name = {Name = "f";};
                                    Body = ELambda {Arg = {Name = "x";};

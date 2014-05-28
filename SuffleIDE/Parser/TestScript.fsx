@@ -1,11 +1,11 @@
 ﻿
-//#r @"M:\projects\Suffle\SuffleIDE\Parser\bin\Debug\Specification.dll"                    
-//#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
-//#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
+#r @"M:\projects\Suffle\SuffleIDE\Parser\bin\Debug\Specification.dll"                    
+#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
+#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
 
-#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
-#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
-#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\Specification\bin\Debug\Specification.dll"
+//#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
+//#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
+//#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\Specification\bin\Debug\Specification.dll"
 
 open FParsec
 open Suffle.Specification.Syntax  
@@ -37,7 +37,17 @@ let run' p = run (_ws p .>> eof)
 //let t2 = run' (p1 <|> p2) "af"
 
 
-let t1 = run' dFunction """
-fun :: unit
-insert x = x
+let t1 = run' eCaseOf """
+
+case ys of
+| [] -> ()
+| (Pair x y):xs -> ()
+end
+
+"""
+
+let t2 = run' pattern """
+
+ (Pair x y):(A _):5:[k]
+
 """
