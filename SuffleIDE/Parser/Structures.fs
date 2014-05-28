@@ -13,17 +13,17 @@ open Parser.Types
 open Suffle.Specification.Libs
 open Suffle.Specification.Sugar
 
-let internal _eident stream =
-    ident |>> (fun name -> { EIdent.Name = name })
+let internal _eident stream =      
+    let pkw = choice <| List.map (pstring >> attempt) keywords
+    let pid = ident |>> (fun name -> { EIdent.Name = name })
+    (attempt pkw >>. fail "Keyword cannot be an identifier") <|> pid
     <| stream
 
 let pLineEnding = optional (pstr sLineEnding)
 let pEndKeyword = pstr sEndKeyword
 
 let eIdent stream = 
-    let pkw = choice <| List.map (pstring >> attempt) keywords
-    let pid = _eident |>> EIdent
-    (attempt pkw >>. fail "Keyword cannot be an identifier") <|> pid
+    _eident |>> EIdent
     <?> "identifier"
     <| stream
 
@@ -42,7 +42,7 @@ let rec arg stream =
 
 and eUnary stream = 
     ws_ unaries .>>. arg  |>> (fun (u, e) -> EUnary{ Op = u; Arg = e })
-    <??> "unary operation"
+    <?> "unary operation"
     <| stream
 
 and eBinary stream = 
@@ -60,7 +60,7 @@ and eBinary stream =
         | b :: bs -> leftAssos (mkbinp bs) b
             
     mkbinp binPrioritised
-    <??> "binary operation"
+    <?> "binary operation"
     <| stream
 
 and eLambda stream =
@@ -81,7 +81,7 @@ and eLambda stream =
                         (ld (mId args.Head) body)
                         args.Tail
         )
-    <??> "lambda expression"
+    <?> "lambda expression"
     <| stream
         
 and eFunApp stream =
@@ -96,7 +96,7 @@ and eFunApp stream =
                                     (fa f <| x) 
                                     xs
                     )
-    <??> "function application"
+    <?> "function application"
     <| stream
 
 and eIfElse stream =
@@ -108,7 +108,7 @@ and eIfElse stream =
            (p_then >>. expression)
            (between p_else pEndKeyword expression)
     |>> (fun (cond, onTrue, onFalse) -> EIfElse{ Cond = cond; OnTrue = onTrue; OnFalse = onFalse })
-    <??> "if-else expression"
+    <?> "if-else expression"
     <| stream
     
 and eLetIn stream = 
@@ -127,7 +127,7 @@ and eLetIn stream =
                       (mli (bi.Head) bo)
                       bi.Tail
         )
-    <??> "let-in expression"
+    <?> "let-in expression"
     <| stream
 
 and eCaseOf stream =
@@ -151,7 +151,7 @@ and eCaseOf stream =
     |>> (fun (sample, plist) ->
             ECaseOf{ Matching = sample; Patterns = plist }
         )
-    <??> "case-of expression"
+    <?> "case-of expression"
     <| stream
 
 and eListCons stream =
@@ -160,19 +160,18 @@ and eListCons stream =
     let left = attempt eFunApp <|> arg 
     let cons = pstr Lists.consOp   
     
-    left
-    .>> cons
+    left .>> cons
     .>>. expression
     |>> (fun (x, xs) ->
             fa (fa (mkIde Lists.consName) x) xs
         )
-    <??> "list constructor (:)"
+    <?> "list constructor (:)"
     <| stream
 
 and eListEmpty stream =
     let empt = Lists.openBracket + Lists.closeBracket 
     pstr empt >>% EIdent{ Name = Lists.emptName } 
-    <??> "empty list literal"
+    <?> "empty list literal"
     <| stream
 
 and eList stream =
@@ -188,7 +187,7 @@ and eList stream =
             let ys = List.foldBack (fun x acc -> fa (fa (mkIde Lists.consName) x) acc) xs (mkIde Lists.emptName)
             fa (fa (mkIde Lists.consName) x) ys
         )
-    <??> "list expression"
+    <?> "list expression"
     <| stream
 
 and expression stream = 
@@ -223,7 +222,6 @@ and dValue stream =
     |>> (fun (t, name, value) ->
             DValue{ Type = t; Name = name; Value = value }
         )
-    <??> "value declaration"
     <| stream 
 
 and dFunction stream =
@@ -247,7 +245,6 @@ and dFunction stream =
              let body' = List.foldBack (fun x acc -> ld x acc) (arg0::args) body 
              DFunction{ Type = t; Name = name; Body = body' }
         )       
-    <??> "function declaration"
     <| stream  
 
 and dDatatype stream =    
@@ -266,7 +263,6 @@ and dDatatype stream =
     |>> (fun (name, ptypes, clist) ->
              DDatatype{ Name = {EIdent.Name = name}; Params = ptypes; Ctors = clist }
         )      
-    <??> "datatype declaration"
     <| stream
 
 and declaration stream =

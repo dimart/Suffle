@@ -185,7 +185,7 @@ type Interpreter () =
     /// Evaluate 'case ... of ...' expression
     and evalCaseOf (stmnt: ECaseOf) (context: Dictionary<string, Stack<Value>>) = 
         let matchable = evalExpr stmnt.Matching context
-        //  Currently not implemented
+        failwith "Not implemented exception"
 
 
     ///  Evaluate constructor application

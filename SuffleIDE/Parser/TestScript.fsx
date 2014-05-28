@@ -23,7 +23,17 @@ open Parser.Pattern
 open Parser.Structures
 open Suffle.Parser
 
-let run' p = run (p .>> eof)
+let run' p = run (_ws p .>> eof)
+
+//let ps = pstring
+//
+//let p1 = ps "a" >>? ps "b" >>? ps "c"
+//let p2 = ps "a" >>? ps "d"
+//
+//let t2 = run' (p1 <|> p2) "af"
 
 
-let t1 = run' pattern """()"""
+let t1 = run' dFunction """
+fun :: unit
+insert x = x
+"""

@@ -4,7 +4,6 @@ open FParsec
 open Suffle.Specification.Syntax  
 
 // For Debugging
-
 let (<!>) (p: Parser<_,_>) label : Parser<_,_> =                           
     fun stream ->
         printfn "%A: Entering %s" stream.Position label
