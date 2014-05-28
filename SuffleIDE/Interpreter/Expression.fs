@@ -9,7 +9,6 @@ let lineNum = 0
 type Interpreter () = 
     /// Current function context representation
     let vars = new Dictionary<string, Stack<Value>> ()
-    let closure = new Dictionary<string, Stack<Value>> ()
 
     /// Returns given context as list
     let getContext (context: Dictionary<string, Stack<Value>>) = 
@@ -20,7 +19,7 @@ type Interpreter () =
 
     /// Sets closure context
     let setClosureContext (x: (string * Value) list) = 
-        closure.Clear()
+        let closure = new Dictionary<string, Stack<Value>> ()
         for (key, value) in x do
             let stack = new Stack<Value>()
             stack.Push value
@@ -127,7 +126,7 @@ type Interpreter () =
             let toRet = evalExpr stmnt.Body context
             removeFromContext x.Name.Name context
             toRet
-        //  Maybe need to pass closure or lambda - dunno now, check on it later
+
         | DFunction x -> 
             addToContext (x.Name.Name, (evalExpr x.Body context)) context
             let toRet = evalExpr stmnt.Body context
@@ -176,17 +175,55 @@ type Interpreter () =
         match func with
         | VClosure (cont, ex) as it ->
             let closureContext = setClosureContext cont
+            let argName = 
             match ex with
-            | ELambda x -> addToContext (x.Arg.Name, arg) closureContext
+                | ELambda x -> x.Arg.Name
             | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
-            evalClosure it closureContext
+            addToContext (argName, arg) closureContext
+            match stmnt.Func with
+            | EIdent x -> 
+                addToContext (x.Name, it) closureContext
+            | _ -> 
+                ()
+            let toRet = evalClosure it closureContext
+//            removeFromContext argName context
+            toRet
         | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
 
     /// Evaluate 'case ... of ...' expression
     and evalCaseOf (stmnt: ECaseOf) (context: Dictionary<string, Stack<Value>>) = 
         let matchable = evalExpr stmnt.Matching context
-        failwith "Not implemented exception"
-
+        let mutable toRet = VUnit
+        let mutable finish = false
+        let names = new List<string>()
+        let matchPattern pattern =
+            names.Clear()
+            let rec tryMatch (value, pattern) =
+                match pattern with
+                | PIdent x ->
+                    addToContext (x.Name, value) context
+                    names.Add x.Name
+                    true
+                | PLiteral x ->
+                    value = x.Value
+                | PCtor (namePat, patterns) ->
+                    match value with
+                    | VCtor (name, values) when name = namePat ->
+                        let pairs = List.zip values patterns
+                        List.fold (fun acc x -> x && acc) true [for pairs in pairs -> tryMatch pairs]
+                    | _ -> false
+                | PWildcard ->
+                    true
+            tryMatch (matchable, pattern)
+        for (pattern, expression) in stmnt.Patterns do
+            if not finish then
+                if matchPattern pattern then
+                    toRet <- evalExpr expression context
+                    for id in names do
+                        removeFromContext id context
+                    finish <- true
+            else ()
+        toRet
 
     ///  Evaluate constructor application
     and evalConstr (stmnt: ECtor) (context: Dictionary<string, Stack<Value>>) = 
