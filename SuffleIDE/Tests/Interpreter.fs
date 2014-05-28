@@ -9,11 +9,11 @@ open Suffle.Interpreter.Interpreter
 type ``Atomic evaluations``() = 
     [<Test>]
     member this.Literals () = 
-        Assert.True <| (VUnit = (eval (ELiteral {Value = VUnit})))
-        Assert.True (VBool true = (eval (ELiteral {Value = VBool true})))
-        Assert.True (VInt 5 = (eval (ELiteral {Value = VInt 5})))
-        Assert.True (VChar 'c' = (eval (ELiteral {Value = VChar 'c'})))
-        Assert.False (VInt 7 = (eval (ELiteral {Value = VInt 5})))
+        Assert.True <| (VUnit = (evalExpression (ELiteral {Value = VUnit})))
+        Assert.True (VBool true = (evalExpression (ELiteral {Value = VBool true})))
+        Assert.True (VInt 5 = (evalExpression (ELiteral {Value = VInt 5})))
+        Assert.True (VChar 'c' = (evalExpression (ELiteral {Value = VChar 'c'})))
+        Assert.False (VInt 7 = (evalExpression (ELiteral {Value = VInt 5})))
 
     [<Test>]
     member this.``If-else statements`` () = 
@@ -22,7 +22,7 @@ type ``Atomic evaluations``() =
     *)
         Assert.True <| 
             (VInt 3 = (
-                eval (
+                evalExpression (
                     EIfElse {
                         Cond = ELiteral {
                             Value = VBool true
@@ -42,7 +42,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             VInt 5 = (
-                eval (
+                evalExpression (
                     EIfElse {
                         Cond = EIfElse {
                             Cond = ELiteral {
@@ -70,7 +70,7 @@ type ``Atomic evaluations``() =
             if true then () else 5
         *)
         try 
-            eval (
+            evalExpression (
                 EIfElse {
                     Cond = ELiteral {
                         Value = VBool true
@@ -95,7 +95,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt 2) = ( 
-                eval (
+                evalExpression (
                     ELetIn {
                         Binding = DValue {
                             Type = TInt
@@ -117,7 +117,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt 5) = (
-                eval (
+                evalExpression (
                     ELetIn {
                         Binding = DValue {
                             Type = TInt
@@ -140,7 +140,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt -5) = (
-                eval (
+                evalExpression (
                     EUnary {
                         Op = UNeg
                         Arg = ELiteral { Value = VInt 5 }
@@ -154,7 +154,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt 3) = (
-                eval (
+                evalExpression (
                     EUnary {
                         Op = UNeg
                         Arg = EUnary {
@@ -171,7 +171,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool false) = (
-                eval (
+                evalExpression (
                     EUnary {
                         Op = UNot
                         Arg = ELiteral { Value = VBool true }
@@ -188,7 +188,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt 8) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BAdd
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -203,7 +203,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt 2) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BSub
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -218,7 +218,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt 4) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BDiv
                         Arg1 = ELiteral { Value = VInt 8 }
@@ -233,7 +233,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VInt 35) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BMul
                         Arg1 = ELiteral { Value = VInt 7 }
@@ -251,7 +251,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool false) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BAnd
                         Arg1 = ELiteral { Value = VBool true }
@@ -266,7 +266,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool true) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BAnd
                         Arg1 = ELiteral { Value = VBool true }
@@ -281,7 +281,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool true) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BOr
                         Arg1 = ELiteral { Value = VBool false }
@@ -296,7 +296,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool false) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BOr
                         Arg1 = ELiteral { Value = VBool false }
@@ -314,7 +314,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool false) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BEQ
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -329,7 +329,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool true) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BNEQ
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -344,7 +344,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool true) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BGT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -359,7 +359,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool false) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BLT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -374,7 +374,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool false) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BNGT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -389,7 +389,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool true) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BNLT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -404,7 +404,7 @@ type ``Atomic evaluations``() =
         *)
         Assert.True (
             (VBool true) = (
-                eval (
+                evalExpression (
                     EBinary {
                         Op = BNLT
                         Arg1 = ELiteral { Value = VInt 5 }
@@ -424,7 +424,7 @@ type ``Atomic evaluations``() =
                 Arg = { EIdent.Name = "x" }
                 Body = EIdent { Name = "x" }
             }) = (
-                eval (
+                evalExpression (
                     ELambda {
                         Arg = { EIdent.Name = "x" }
                         Body = EIdent { Name = "x" }
