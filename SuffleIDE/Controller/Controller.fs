@@ -9,5 +9,6 @@ let main argv =
     if argv.Length = 1 then
         let program = File.ReadAllText argv.[0]
         let ast = parse program
-        evalProgram ast
+        let interpreter = new Suffle.Interpreter.Expression.Interpreter()
+        printf "%s" <| interpreter.EvaluateProgram ast
     0 // возвращение целочисленного кода выхода
