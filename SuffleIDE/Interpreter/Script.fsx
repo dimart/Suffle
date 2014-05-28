@@ -10,6 +10,3 @@ open Suffle.Specification.Types
 open Suffle.Interpreter.Interpreter
 
 // Определите здесь код скрипта библиотеки
-let a = (EBinary {Op = BAdd; Arg1 = ELiteral {Value = VInt 5}; Arg2 = ELiteral {Value = VInt 7}})
-
-let x = eval a

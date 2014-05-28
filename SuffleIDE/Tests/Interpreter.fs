@@ -415,7 +415,7 @@ type ``Atomic evaluations``() =
         )
 
     [<Test>]
-    member this.``Lambda evaluation``() = 
+    member this.``Lambda evaluation and function application``() = 
     (*
         (\x -> x)
     *)
@@ -428,6 +428,71 @@ type ``Atomic evaluations``() =
                     ELambda {
                         Arg = { EIdent.Name = "x" }
                         Body = EIdent { Name = "x" }
+                    }
+                )
+            )
+        )
+
+    (*
+        (\x -> 5) 3
+    
+        Assert.True (
+            (VInt 5) = (
+                    evalExpression (
+                        EFunApp {
+                            Func = ELambda {
+                                Arg = { EIdent.Name = "x"}
+                                Body = ELiteral { Value = VInt 5 }
+                            }
+                            Arg = ELiteral { Value = VInt 3 }
+                        }
+                    )
+                )
+            )*)
+            
+    [<Test>]
+    member this.``Case .. of .. evaluation``() = 
+    (*
+        case 5 of
+        | 3 -> 7
+        | 4 -> 8
+        | 5 -> 6
+        end
+    *)
+        Assert.True (
+            VInt 6 = (
+                evalExpression (
+                    ECaseOf {
+                        Matching = ELiteral { Value = VInt 5 }
+                        Patterns = 
+                            [
+                                (PLiteral { ELiteral.Value = VInt 3}, ELiteral { Value = VInt 7 }); 
+                                (PLiteral { ELiteral.Value = VInt 4}, ELiteral { Value = VInt 8 });
+                                (PLiteral { ELiteral.Value = VInt 5}, ELiteral { Value = VInt 6 })
+                            ]
+                    }
+                )
+            )
+        )
+
+    (*
+        case 5 of
+        | x -> x + 3
+        end
+    *)
+        Assert.True (
+            VInt 8 = (
+                evalExpression (
+                    ECaseOf {
+                        Matching = ELiteral { Value = VInt 5 }
+                        Patterns = 
+                            [
+                                (PIdent { EIdent.Name = "x" }, EBinary { 
+                                    Op = BAdd
+                                    Arg1 = EIdent { Name = "x" } 
+                                    Arg2 = ELiteral { Value = VInt 3 }
+                                })
+                            ]
                     }
                 )
             )
