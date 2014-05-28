@@ -1,7 +1,11 @@
 ﻿
-#r @"M:\projects\Suffle\SuffleIDE\Parser\bin\Debug\Specification.dll"                    
-#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
-#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
+//#r @"M:\projects\Suffle\SuffleIDE\Parser\bin\Debug\Specification.dll"                    
+//#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
+//#r @"M:\projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
+
+#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll"
+#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll"
+#r @"C:\Users\Сергей\SkyDrive\Documents\Visual Studio 2013\Projects\Suffle\SuffleIDE\Specification\bin\Debug\Specification.dll"
 
 open FParsec
 open Suffle.Specification.Syntax  
