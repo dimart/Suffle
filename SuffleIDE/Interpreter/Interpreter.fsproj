@@ -53,6 +53,7 @@
     <Compile Include="ExceptionList.fs" />
     <Compile Include="Expression.fs" />
     <Compile Include="Interpreter.fs" />
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

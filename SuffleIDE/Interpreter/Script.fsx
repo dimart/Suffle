@@ -10,3 +10,13 @@ open Suffle.Specification.Types
 open Suffle.Interpreter.Interpreter
 
 // Определите здесь код скрипта библиотеки
+
+let x = evalExpression (
+                        EFunApp {
+                            Func = ELambda {
+                                Arg = { EIdent.Name = "x"}
+                                Body = ELiteral { Value = VInt 5 }
+                            }
+                            Arg = ELiteral { Value = VInt 3 }
+                        }
+                    )

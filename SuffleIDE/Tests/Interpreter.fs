@@ -415,22 +415,7 @@ type ``Atomic evaluations``() =
         )
 
     [<Test>]
-    member this.``Lambda evaluation``() = 
-    (*
-        (\x -> x)
-    *)
-        Assert.True (
-              VClosure ([],ELambda {Arg = {Name = "x";};
-                        Body = EIdent {Name = "x";};})
-                = (
-                evalExpression (
-                    ELambda {
-                        Arg = { EIdent.Name = "x" }
-                        Body = EIdent { Name = "x" }
-                    }
-                )
-            )
-        )
+    member this.``Lambda evaluation``() =     
 
     (*
         (\x -> 5) 3
@@ -448,6 +433,21 @@ type ``Atomic evaluations``() =
                     )
                 )
             )
+    (*
+        (\x -> x)
+    *)
+        Assert.True (
+              VClosure ([],ELambda {Arg = {Name = "x";};
+                        Body = EIdent {Name = "x";};})
+                = (
+                evalExpression (
+                    ELambda {
+                        Arg = { EIdent.Name = "x" }
+                        Body = EIdent { Name = "x" }
+                    }
+                )
+            )
+        )
             
     [<Test>]
     member this.``Case .. of .. evaluation``() = 

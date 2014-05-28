@@ -1,18 +1,7 @@
-module Suffle.Specification.Libs.Lists
-
-let typeName = "List"
-let consName = "Cons"
-let emptName = "Nil"
-
-let lib = """
 
 datatype List 'a =
 | Cons 'a (List 'a)
 | Nil
-end
-
-datatype Pair 'a 'b = 
-| P 'a 'b
 end
 
 fun :: (List 'a) -> 'a
@@ -115,6 +104,10 @@ qsort xs =
     | [] -> [] | x:xs -> concat [qsort (filter (\y -> y < x) xs), [x], qsort (filter (\y -> y >= x) xs)]
     end
 
+datatype Pair 'a 'b = 
+| P 'a 'b
+end
+
 fun :: ('a -> 'a -> bool) -> List 'a -> List 'a
 mergesort pred xs =
     let 
@@ -141,6 +134,20 @@ mergesort pred xs =
         | _ -> case (split xs) of | P xs1 xs2 -> merge pred (mergesort pred xs1) (mergesort pred xs2) end
         end
 
-    end         
-   
-"""
+    end
+
+fun :: int -> List int
+gen n =
+    case n of 
+    | 0 -> []
+    | _ -> n : gen (n - 1)
+    end
+
+val :: List int
+xs = gen 10
+
+val :: List int
+ys = qsort xs
+
+val :: List int
+zs = mergesort (\x y -> x <= y) xs

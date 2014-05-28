@@ -29,25 +29,15 @@ open Suffle.Parser
 
 let run' p = run (_ws p .>> eof)
 
-//let ps = pstring
-//
-//let p1 = ps "a" >>? ps "b" >>? ps "c"
-//let p2 = ps "a" >>? ps "d"
-//
-//let t2 = run' (p1 <|> p2) "af"
 
+let t2 = parse """
 
-let t1 = run' eCaseOf """
-
-case ys of
-| [] -> ()
-| (Pair x y):xs -> ()
-end
-
-"""
-
-let t2 = run' pattern """
-
- (Pair x y):(A _):5:[k]
+fun :: ('a -> 'a -> bool) -> List 'a -> List 'a -> List 'a
+merge pred xs ys =
+    case (P xs ys) of
+    | P xs [] -> xs
+    | P [] ys -> ys
+    | P (x:xs) (y:ys) -> if (pred x y) then (x : (merge pred xs (y:ys))) else (y : (merge pred (x:xs) ys)) end
+    end
 
 """

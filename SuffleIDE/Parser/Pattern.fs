@@ -23,11 +23,11 @@ let internal pWildcard stream =
     <?> "wildcard pattern"
     <| stream
 
-let internal basicpp stream = 
-    choice [attempt pLiteral; attempt pIdent; pWildcard]
+let rec basicpp stream = 
+    choice <| List.map attempt [pListEmpty; pList; pLiteral; pIdent; pWildcard]
     <| stream
 
-let rec internal pCtor stream =
+and pCtor stream =
     let ctor_arg = attempt basicpp <|> inbrackets pattern
     ctor .>>. many ctor_arg |>> PCtor
     <?> "constructor"
@@ -57,7 +57,7 @@ and internal pList stream =
     <| stream
 
 and pattern s =
-    let p = choice [attempt pListEmpty; attempt pListCons; attempt pList; basicpp; pCtor]
+    let p = choice [attempt pListCons; basicpp; pCtor]
     attempt p <|> inbrackets pattern
     <| s
 
