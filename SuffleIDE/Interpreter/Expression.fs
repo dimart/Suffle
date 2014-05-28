@@ -176,9 +176,9 @@ type Interpreter () =
         | VClosure (cont, ex) as it ->
             let closureContext = setClosureContext cont
             let argName = 
-            match ex with
-                | ELambda x -> x.Arg.Name
-            | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
+                match ex with
+                    | ELambda x -> x.Arg.Name
+                    | _ -> raise (TypeMismatchException("Type mismatch", lineNum))
             addToContext (argName, arg) closureContext
             match stmnt.Func with
             | EIdent x -> 
